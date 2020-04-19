@@ -1,0 +1,22 @@
+reference:
+
+- title: Utilities
+  contents:
+  - distance_melt
+  - format_ps
+  - gmm_utilities
+  - normalize_copy_number
+  - taxa_time_table
+
+- title: Analysis and visualization
+  contents:
+  - temporal_diversity
+  - temporal_turnover
+  - taxa_coverage
+  - plot_syncom_composition
+  - plot_stability_properties
+  - plot_nmds_stability
+  - plot_trajectory
+  - plot_module_abundance
+  - plot_growth_rate
+

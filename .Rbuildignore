@@ -1,0 +1,7 @@
+^docs$
+^_pkgdown\.yml$
+^Meta$
+^doc$
+^syncomR\.Rproj$
+^\.Rproj\.user$
+^testing$
