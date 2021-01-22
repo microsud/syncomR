@@ -1,0 +1,17 @@
+
+citHeader("To cite syncomR in publications use:")
+
+citEntry(
+entry="Manual",
+journal = "",
+title = "syncomR: Synthetic Microbial Community Data Exploration, Analysis and Visualization using R",
+year = "2019",
+author = personList(as.person("Sudarshan A. Shetty")),
+url = "https://github.com/microsud/syncomR",
+textVersion = paste("Shetty SA (2020). syncomR: Synthetic Microbial Community Data Exploration, Analysis and Visualization using R. R package version 0.0.9 https://github.com/microsud/syncomR.")
+)
+
+
+
+citHeader("Please cite the package as follows:")
+

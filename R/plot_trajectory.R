@@ -1,27 +1,41 @@
-#' @title Plot temporal changes in taxa abundances
+#' @title Plot Temporal Changes in Taxa Abundances
 #'
-#' @description Temporal abundances of taxa.
+#' @description Temporal taxa abundances are plotted for visual exploration.
 #'
-#' @details Temporal taxa abundances are plotted for visual exploration
 #' @param ps A \code{\link{phyloseq-class}}
+#'
 #' @param taxa.level Taxonomic level
+#'
 #' @param type Type of plot either all or single. If `type = single` taxa must be specified
+#'
 #' @param taxa If single taxa name based on taxa.level that's choosen must be specified
+#'
 #' @param time.col Column specifying time variable
+#'
 #' @param group.variable Column specifying variable to be colored.
-#' For e.g. if multiple subjects/bioreactors.
+#'                       For e.g. if multiple subjects/bioreactors.
+#'
 #' @param color.pal List of hex color codes
+#'
 #' @param transform.counts Any one of \code{\link{transform}}
+#'
 #' @return ggplot object.
+#'
 #' @references
 #' \itemize{
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #' @examples
+#' \dontrun{
 #' data(SyncomFiltData)
 #' ps1.sycom.rel <- microbiome::transform(SyncomFiltData, "compositional")
-#' fer_cols <- c(`Bioreactor A` = "#b2182b", `Bioreactor B` = "#2166ac", `Bioreactor C` = "#35978f")
+#' fer_cols <- c(
+#'   `Bioreactor A` = "#b2182b",
+#'   `Bioreactor B` = "#2166ac",
+#'   `Bioreactor C` = "#35978f"
+#' )
+#'
 #' tax.trac <- plot_trajectory(ps1.sycom.rel,
 #'   time.col = "Time_hr",
 #'   taxa.level = "Species",
@@ -32,14 +46,23 @@
 #'   transform.counts = "compositional"
 #' )
 #' tax.trac + geom_smooth() + theme_syncom()
+#'
+#' }
+#'
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
+#'
 #' @importFrom phyloseq psmelt
+#'
 #' @importFrom ggplot2 geom_line
+#'
 #' @importFrom ggplot2 geom_smooth
+#'
 #' @importFrom scales pretty_breaks
+#'
 #' @importFrom ggplot2 labs
+#'
 #' @export
-#' @keywords Anlaysis and visualization
+#' @keywords Analysis and visualization
 
 plot_trajectory <- function(ps,
                             taxa.level = "Species",
@@ -49,12 +72,18 @@ plot_trajectory <- function(ps,
                             group.variable = NULL,
                             color.pal = NULL,
                             transform.counts = "compositional") {
-  require(scales)
+  # require(scales)
+
+  time <- Abundance <- taxa.pl <- NULL
+
   ps <- microbiome::transform(ps, transform.counts)
+
   ps1.sub.df <- psmelt(ps)
 
   ps1.sub.df$time <- as.numeric(ps1.sub.df[, time.col])
+
   varf <- sym(taxa.level)
+
   if (type == "all") {
     ps1.sub.df$Abundance <- ps1.sub.df$Abundance * 100
     AllPlot <- ggplot(ps1.sub.df, aes(x = time, y = Abundance)) +
@@ -71,6 +100,7 @@ plot_trajectory <- function(ps,
       scale_color_manual("Taxa", values = color.pal) +
       # geom_vline(xintercept = 168, size = 1.2, alpha= 0.6)
       theme(panel.border = element_rect("transparent", size = 0.15))
+
     return(AllPlot)
   } else {
     ps1.sub.df$Abundance <- ps1.sub.df$Abundance * 100
@@ -91,6 +121,7 @@ plot_trajectory <- function(ps,
       scale_color_manual("Taxa", values = color.pal) +
       theme(panel.border = element_rect("transparent", size = 0.15)) +
       labs(subtitle = taxa)
+
     return(IndPlot)
   }
 }

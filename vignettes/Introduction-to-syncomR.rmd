@@ -1,0 +1,272 @@
+---
+title: "Introduction to syncomR"
+author: "Sudarshan A. Shetty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to syncomR}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+The `syncomR` is an R package consisting of functions for use with time-series microbial census data. The package is mainly accompaying the research article "Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes" Shetty SA., et al 2020. Therefore, the functions have been tested using a synthetic minimal microbiome that was assembled in three bioreactors. Published R codes were wrapped for convinient handling of the temporal census data of synthetic minimal microbiome. 
+
+## Installing syncomR   
+```{r, eval=FALSE}
+install.packages("devtools")
+
+devtools::install_github("microsud/syncomR")
+```
+
+## Load libraries
+
+```{r warning=FALSE, message=FALSE}
+library(syncomR)
+library(readr)
+library(tidyr)
+library(magrittr)
+#library(edgeR)
+library(RColorBrewer)
+library(DT)
+library(knitr)
+library(patchwork)
+
+fasting_cols <- c("#C71585", "#008080")
+
+fer_cols <- c(Bioreactor_5= "#b2182b", Bioreactor_6="#2166ac", Bioreactor_8 = "#35978f")
+```
+
+
+# Convert to taxa-time table    
+
+```{r taxa-time, message=FALSE, warning=FALSE}
+ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
+otu.tb <- taxa_time_table(ps1.b5, 
+                          normalize = TRUE, 
+                          time.col = "Time_hr", 
+                          remove.zero = TRUE)
+knitr::kable(otu.tb)
+```
+
+## Coverage    
+Calculate how many taxa account for a certain percentage of total abundance in a community. Here, we set 95% threshold.  
+
+```{r coverage, fig.height=4, fig.width=8, fig.align='center'}
+
+data(SyncomFiltData)
+fasting_cols <- c("#b3de69", "#fb8072", "#80b1d3")
+pl <- taxa_coverage(SyncomFiltData,
+                    coverage = 0.95,
+                    time.column = "Time_hr_num",
+                    shape.variable = "Acetate_Feed",
+                    color.variable = "Fasting",
+                    color.pal = fasting_cols,
+                    y.breaks = seq(0, 16, 1),
+                    y.limits = c(3, 13)
+)
+pl <- pl + facet_wrap(~StudyIdentifier) + theme_syncom() 
+pl
+
+```
+
+
+## Community composition   
+
+Visualizing overal community composition over time in different bioreactors.  
+
+** Area plot**  
+```{r Community-composition-area, fig.align='center', fig.height=6, fig.width=8}
+data(SyncomFiltData)
+SyncomFiltData.rel <- microbiome::transform(SyncomFiltData, "compositional")
+p <- plot_syncom_composition(SyncomFiltData.rel,
+                             type = "area",
+                             time.col = "Time_hr_num",
+                             taxa.level = "OTU",
+                             sp.fill.pal = syncom_colors("BacterialSpecies"), 
+                             facet.var = "StudyIdentifier")
+print(p + theme_syncom())   
+```
+
+** Line plot**  
+
+Here, we will use a combination of `add_time_lag` function and line plot. We want to see only those samples for Bioreactor A that are from fasting, i.e. samples taken after 12h or more gaps.  
+
+```{r Community-composition-line, fig.align='center', fig.height=6, fig.width=16}
+data(SyncomFiltData)
+SyncomFiltData.rel <- microbiome::transform(SyncomFiltData, "compositional")
+bioa_ps <- subset_samples(SyncomFiltData.rel, StudyIdentifier=="Bioreactor A")
+fasting_ps <- add_time_lag(bioa_ps)
+fasting_ps <- subset_samples(fasting_ps, time_lag >= 12)
+
+p <- plot_syncom_composition(fasting_ps,
+                             type = "bar",
+                             time.col = "Time_hr_num",
+                             taxa.level = "OTU",
+                             sp.fill.pal = syncom_colors("BacterialSpecies"), 
+                             #facet.var = "StudyIdentifier",
+                             numeric.x.axis = F) 
+print(p + theme_syncom())
+```
+
+## Temporal trajectory of individual taxa  
+Now, we will look at individual taxa relative abundances over time.  
+
+```{r Temp-tracjectory, fig.height = 3, fig.width = 6, fig.align='center'}
+
+ps1.sycom.rel <- microbiome::transform(SyncomFiltData, "compositional")
+
+fer_cols <- c(`Bioreactor A`= "#b2182b", `Bioreactor B`="#2166ac", `Bioreactor C` = "#35978f")
+
+tax.trac <- plot_trajectory(ps1.sycom.rel,
+                            time.col = "Time_hr",
+                            taxa.level = "Species",
+                            type = "single",
+                            taxa = "Akkermansia_muciniphila",
+                            group.variable = "StudyIdentifier",
+                            color.pal = fer_cols,
+                            transform.counts = "compositional")
+tax.trac <- tax.trac + geom_smooth() + theme_syncom()
+## a line to specific timepoint of interest
+tax.trac + geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") 
+
+```
+
+
+## Temporal turnover of communities    
+
+Let us now check for temporal patterns in community.  
+```{r Temporal-turnover, fig.align='center'}
+library(patchwork)
+# Succession
+
+data(SyncomFiltData)
+ps.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+p.start <- temporal_turnover(ps.b5, tree =NULL,
+                             time.col = 'Time_hr_num', 
+                             method = "canberra", 
+                             compositional = TRUE,
+                             compared.to = "start") + theme_syncom()
+#p.start 
+
+p.subseq <- temporal_turnover(ps.b5, tree =NULL,
+                              time.col = 'Time_hr_num', 
+                              method = "canberra", 
+                              compositional = TRUE,
+                              compared.to = "subsequent")+ theme_syncom() 
+#p.subseq  
+
+p.final <- temporal_turnover(ps.b5, tree =NULL,
+                             time.col = 'Time_hr_num', 
+                             method = "canberra", 
+                             compositional = TRUE,
+                             compared.to = "final") + theme_syncom() 
+#p.final 
+
+p.start / p.subseq / p.final
+
+```
+
+The temporal turnover data can be extracted as follows.  
+```{r}
+# extract data 
+dat <- p$data
+kable(head(dat))
+```
+
+
+# Temporal changes in eveness of community  
+Currently, `syncomR` only inequality from `microbiome` package is supported.   
+
+```{r Temporal-eveness, fig.align='center', fig.width=4, fig.height=6}
+data(SyncomFiltData)
+p <- temporal_diversity(SyncomFiltData, 
+                        time.col = 'Time_hr_num', 
+                        div.measure = "gini")
+p <- p + facet_wrap(~StudyIdentifier, ncol=1) + geom_smooth(fill = "#a6bddb", color = "#d94801") 
+p + theme_syncom()
+
+```
+
+## Comunity-level stability properties  
+Calculate community stability properties as decribed by Florian Centler and Zishu Liu, UFZ Leipzig, Germany. [Ecological Stability Properties. Microbial Communities Assessed by Flow Cytometry" by Liu et al., 2018 ](http://msphere.asm.org/content/3/1/e00564-17). Please cite this work when using this function. A value of -1 will let the script select these time points automatically, assuming that the file contains a single disturbance experiment (i.e. start and end of the experiment refer to the first and last entry, respectively). Otherwise, specify a time value which is actually present in the data, i.e. a value which appears in the first column of the input file. 
+For more information check `?stability_properties`.  
+```{r stability-properties}
+data(SyncomFiltData)
+ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+ps1.sub <- subset_samples(ps1.b5, Time_hr_num >= 12)
+dat.stab <- stability_properties(ps1.sub, time.col = "Time_hr")# B. hydrogenotrophic introduced
+knitr::kable(head(dat.stab))
+
+```
+
+## Community trajectory (2D ordination)  
+Input is from the `stability_properties` function.  
+ 
+```{r nmds-stability, fig.align='center', fig.width=6, fig.height=4}
+
+p_ba <- plot_nmds_stability(dat.stab) 
+# the nmds message is printed on purpose for user to check if Solution reached
+p_ba$plot + theme_syncom() + xlab("NMDS1") + ylab("NMDS2")
+
+```
+
+## Plot stability properties   
+
+Distance overtime compared to refrence state.
+
+```{r fig.align='center', fig.width=8, fig.height=4}
+data(SyncomFiltData)
+ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+dat.stab <- stability_properties(ps1.b5, time.col = "Time_hr",
+                                 experimentStart = 24, # first spiked sample after initiation of continous feed operation
+                                 tref=168)
+plot_resistance(dat.stab) + geom_rect(aes(group = NULL,   col = NULL, ymax = -0.1, ymin = -0.2, xmin=120, xmax=470),
+      fill = "#FDFEFE", 
+      col = "#FDFEFE"
+    ) + ylim(c(-0.2,0.6)) + xlim(c(120,470)) + coord_polar() + theme_bw() 
+
+```
+
+```{r fig.width=8, fig.height=6}
+
+euc <- plot_resilience(dat.stab, method = "euclidean") + geom_path(alpha = 0.9, arrow = arrow(angle = 15, length = unit(0.1, "inches"),
+                  ends = "last", type = "closed"), color="steelblue")
+canb <- plot_resilience(dat.stab, method = "canberra") + geom_path(alpha = 0.9, arrow = arrow(angle = 15, length = unit(0.1, "inches"),
+                  ends = "last", type = "closed"), color="brown")#+ ylim(c(0,0.6)) + coord_polar()
+
+euc / canb
+```
+
+resistance resembles the ability of a system to remain unchanged despite a perturbation 
+resilience describes the ability of a system to recover to a reference state after a perturbation
+
+Online resilience overtime.  
+```{r stability-properties-2, fig.align='center', fig.width=8, fig.height=3}
+
+plot_resilience_online(dat.stab, col.low = "#fa9fb5", col.high = "#49006a") + geom_path(alpha = 0.9, arrow = arrow(angle = 15, length = unit(0.1, "inches"),
+                  ends = "last", type = "closed"), color="red")+ 
+  coord_polar(theta = "x") + theme_bw()  + ylim(c(-0.2,0.4))+ xlim(c(24, 460)) 
+#+  ADD ARROW SHOWING DIRECTION FROM ZERO TO 460h
+#+ geom_curve(aes(x = 200, y = 0.0, xend = 400, yend = 0.4), curvature = 4)  
+```
+
+## Gut metabolic modules  
+
+```{r GMM-plot, fig.align='center', fig.width=6, fig.height=6}
+data(SyncomGMM)
+focal.species <- c("Bacteroides_ovatus", "Bacteroides_xylanisolvens")
+p<- plot_module_abundances(SyncomGMM,
+                           tax.variable = focal.species,
+                           mm.variable = c("propionate production III", "lactose degradation","xylose degradation", "galactose degradation"),
+                           color.pal = syncom_colors("BacterialSpecies"),
+                           nrow=3,
+                           ncol=1)
+p + theme_syncom() + theme(legend.position="bottom")
+``` 
+
+
+```{r}
+sessionInfo()
+```
+
+
+

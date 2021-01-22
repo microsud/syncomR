@@ -1,20 +1,27 @@
-#' @title Plot stability properties Resilience
+#' @title Plot Stability Properties Resilience
 #'
-#' @description Resilience of the community as decribed by Florian Centler and Zishu Liu, UFZ Leipzig, Germany.
+#' @description Resilience of the community as described by
+#'              Florian Centler and Zishu Liu, UFZ Leipzig, Germany.
 #'
-#' @details This script was modified to get ggplot object from the paper on "Ecological Stability Properties.
-#' Microbial Communities Assessed by Flow Cytometry" by Liu et al., 2018
-#'  \url{\link{http://msphere.asm.org/content/3/1/e00564-17}}.
-#'  This functions takes output from the \code{\link{stability_properties}}.
+#' @details This script was modified to get ggplot object from the paper
+#'          on "Ecological Stability Properties. Microbial Communities Assessed
+#'          by Flow Cytometry" by Liu et al., 2018
+#'          \url{http://msphere.asm.org/content/3/1/e00564-17}.
+#'          This functions takes output from the \code{\link{stability_properties}}.
+#'
 #' @param stab.in The input come from \code{\link{stability_properties}} function.
-#' @param method Either euclidean or canberra
+#'
+#' @param method Either Euclidean or Canberra
+#'
 #' @return ggplot object.
+#'
 #' @seealso Input for this functions comes from \code{\link{stability_properties}}
+#'
 #' @references
 #' \itemize{
 #' \item{}{Liu, Z., et al. (2018). Ecological stability properties of
-#' microbial communities assessed by flow cytometry. mSphere, 3(1), e00564-17.
-#' http://msphere.asm.org/content/3/1/e00564-17
+#'         microbial communities assessed by flow cytometry. \emph{mSphere}, 3(1), e00564-17.
+#' \url{http://msphere.asm.org/content/3/1/e00564-17}
 #' }
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
@@ -33,16 +40,17 @@
 #'
 plot_resilience <- function(stab.in, method = c("euclidean", "canberra")) {
   if (method == "euclidean") {
-    p <- plot_resilience_euclidean(stab.in)
+    p <- .plot_resilience_euclidean(stab.in)
     return(p)
   } else if (method == "canberra") {
-    p <- plot_resilience_canberra(stab.in)
+    p <- .plot_resilience_canberra(stab.in)
 
     return(p)
   }
 }
 
-plot_resilience_euclidean <- function(stab.in) {
+.plot_resilience_euclidean <- function(stab.in) {
+  Time <- RLeuclidean <- Variable <- NULL
   experimentEnd <- stab.in$experimentEnd
   maxEuclideanId <- stab.in$maxEuclideanId
   # maxCanberraId <- stab.in$maxCanberraId
@@ -87,12 +95,16 @@ plot_resilience_euclidean <- function(stab.in) {
 
   return(p)
 }
+
 # expression(paste("Community evolve apart ", s[ref]))
-plot_resilience_canberra <- function(stab.in) {
+.plot_resilience_canberra <- function(stab.in) {
+  Time <- RLcanberra <- Variable <- NULL
+
   experimentEnd <- stab.in$experimentEnd
   # maxEuclideanId <- stab.in$maxEuclideanId
   maxCanberraId <- stab.in$maxCanberraId
   data <- stab.in$data
+
   ElasticityCanberra <- (data[maxCanberraId, "canberra"] - data[nrow(data), "canberra"]) / (data[nrow(data), 1] - data[maxCanberraId, 1])
 
   df.1 <- subset(data, Time %in% data[maxCanberraId:nrow(data), 1])

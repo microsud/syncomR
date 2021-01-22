@@ -7,27 +7,36 @@
 #' @param time.col Column specifying time variable
 #' @param div.measure Currently only Gini as a measure of inequality is used
 #' @param plot TRUE or FALSE if TRUE plot is returned else a data frame
-#' @return Temporal plot of inquality.
+#' @return Temporal plot of inequality.
+#'
 #' @references
 #' \itemize{
 #' \item{}{To cite the package, see citation('microbiome')}
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
+#'
 #' @examples
+#'\dontrun{
 #' data(SyncomFiltData)
 #' p <- temporal_diversity(SyncomFiltData, time.col = "Time_hr_num", div.measure = "gini")
 #' p + facet_grid(~StudyIdentifier) + geom_smooth(fill = "#a6bddb", color = "#d94801")
-#' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
-#' @import dplyr
-#' @export
-#' @keywords Anlaysis and visualization
+#' }
 #'
+#' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
+#'
+#' @export
+#' @keywords Analysis and visualization
+#'
+
 temporal_diversity <- function(ps, time.col = "Time_hr_num",
                                div.measure = "gini", plot = TRUE) {
+  time <- Inequality <- NULL
+
+
   even_df <- as.data.frame(microbiome::inequality(ps))
   colnames(even_df) <- "Inequality"
-  meta_df <- meta(ps)
+  meta_df <- microbiome::meta(ps)
   # head(meta_df)
 
   metadf <- cbind(meta_df, even_df)

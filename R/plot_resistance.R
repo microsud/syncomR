@@ -1,37 +1,45 @@
-#' @title Plot stability properties Resistance
+#' @title Plot Stability Properties Resistance
 #'
 #' @description Resistance of the community overtime as decribed by Florian Centler and Zishu Liu, UFZ Leipzig, Germany.
 #'
-#' @details This script was modified to get ggplot object from the paper on "Ecological Stability Properties.
-#' Microbial Communities Assessed by Flow Cytometry" by Liu et al., 2018
-#'  \url{\link{http://msphere.asm.org/content/3/1/e00564-17}}.
-#'  This functions takes output from the \code{\link{stability_properties}}.
+#' @details This script was modified to get ggplot object from the paper on
+#'          "Ecological Stability Properties. Microbial Communities Assessed
+#'          by Flow Cytometry" by Liu et al., 2018
+#'          \url{http://msphere.asm.org/content/3/1/e00564-17}.
+#'          This functions takes output from the \code{\link{stability_properties}}.
+#'
 #' @param stab.in The input come from \code{\link{stability_properties}} function.
+#'
 #' @return ggplot object.
+#'
 #' @seealso Input for this functions comes from \code{\link{stability_properties}}
+#'
 #' @references
 #' \itemize{
 #' \item{}{Liu, Z., et al. (2018). Ecological stability properties of
-#' microbial communities assessed by flow cytometry. mSphere, 3(1), e00564-17.
-#' http://msphere.asm.org/content/3/1/e00564-17
+#'         microbial communities assessed by flow cytometry. \emph{mSphere}, 3(1), e00564-17.
+#' \url{http://msphere.asm.org/content/3/1/e00564-17}
 #' }
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #'
 #' @examples
+#'\dontrun{
 #' data(SyncomFiltData)
 #' ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
 #' ps1.sub <- subset_samples(ps1.b5, Time_hr_num >= 172)
 #' dat.stab <- stability_properties(ps1.sub, time.col = "Time_hr")
 #' plot_resistance(dat.stab)
+#'
+#'}
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
 #'
 #' @export
-#' @keywords Anlaysis and visualization
+#'
+#' @keywords Analysis and visualization
 #'
 plot_resistance <- function(stab.in) {
-
-
+  Distance <- DistanceMethod <- Variable <- Time <- NULL
   # titleSize <- 0.95
   numberOfGates <- stab.in$numberOfGates
   tref <- stab.in$tref
@@ -100,7 +108,7 @@ plot_resistance <- function(stab.in) {
   )
   p <- p + geom_hline(aes(yintercept = r_Euclidean),
     colour = "deepskyblue3", linetype = "dashed"
-  ) + ylab("Resistance (RS)") +
+  ) + ylab(expression(paste("Community evolve apart ", s[ref]))) +
     geom_hline(aes(yintercept = r_Canberra),
       colour = "brown3", linetype = "dashed"
     ) + ggtitle(label = "", subtitle = lab.txt)

@@ -1,56 +1,79 @@
-#' @title Comunity-level stability properties
+#' @title Community-level Stability Properties
 #'
-#' @description Calculate community stability properties as decribed by Florian Centler and Zishu Liu, UFZ Leipzig, Germany.
+#' @description Calculate community stability properties as decribed by
+#'              Florian Centler and Zishu Liu, UFZ Leipzig, Germany.
 #'
 #' @details This script was modified from the paper on "Ecological Stability Properties.
-#' Microbial Communities Assessed by Flow Cytometry" by Liu et al., 2018
-#'  \url{\link{http://msphere.asm.org/content/3/1/e00564-17}}.
-#'  Please cite this work when using this function. A value of -1 will let the script select these time points automatically,
-#'  assuming that the file contains a single disturbance experiment (i.e. start and
-#'  end of the experiment refer to the first and last entry, respectively). Otherwise, specify a time value which is actually present in the data, i.e.
-#'  a value which appears in the first column of the input file.
+#'          Microbial Communities Assessed by Flow Cytometry" by Liu et al., 2018
+#'          \url{http://msphere.asm.org/content/3/1/e00564-17}.
+#'          Please cite this work when using this function. A value of -1 will let
+#'          the script select these time points automatically,
+#'          assuming that the file contains a single disturbance experiment
+#'          (i.e. start and end of the experiment refer to the first and last entry,
+#'          respectively). Otherwise, specify a time value which is actually present in
+#'          the data, i.e.a value which appears in the first column of the input file.
 #'
 #' \itemize{
 #' \item{}{Identify reference states}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
-#' @param ps A \code{\link{phyloseq-class}}. The input \code{\link{phyloseq}} object must contain a single disturbance experiment (i.e. start and end of the
-#' experiment refer to the first and last entry, respectively).
+#' @param ps A \code{\link{phyloseq-class}}. The input \code{\link{phyloseq}} object
+#'           must contain a single disturbance experiment (i.e. start and end of the
+#'           experiment refer to the first and last entry, respectively).
+#'
 #' @param experimentStart Start of the experiment (experimentStart). A value of -1 will let
-#' the script select these time points automatically. Otherwise, specify a time value which is actually present in the data, i.e.
-#'  a value which appears in the first column of the input file.
+#'                        the script select these time points automatically. Otherwise,
+#'                        specify a time value which is actually present in the data, i.e.
+#'                        a value which appears in the first column of the input file.
+#'
 #' @param experimentEnd End of the experiment (experimentEnd). A value of -1 will let
-#' the script select these time points automatically. Otherwise, specify a time value which is actually present in the data, i.e.
+#'                      the script select these time points automatically. Otherwise,
+#'                      specify a time value which is actually present in the data, i.e.
 #' a value which appears in the first column of the input file.
-#' @param overrideMaxEuclidean Maximal deviation (d_max) using Euclidean distance (overrideMaxEuclidean).
-#' A value of -1 will let the script select these time points automatically. Otherwise, specify a time value which is actually present in the data, i.e.
-#'  a value which appears in the first column of the input file.
-#' @param overrideMaxCanberra Maximal deviation (d_max) using Canberra distance (overrideMaxCanberra).
-#' A value of -1 will let the script select these time points automatically. Otherwise, specify a time value which is actually present in the data, i.e.
-#'  a value which appears in the first column of the input file.
-#' @param tref Disturbance event (tref). Otherwise, specify a time value which is actually present in the data, i.e.
-#'  a value which appears in the first column of the input file.
+#'
+#' @param overrideMaxEuclidean Maximal deviation (d_max) using Euclidean distance
+#'                             (overrideMaxEuclidean). A value of -1 will let the script
+#'                             select these time points automatically. Otherwise, specify
+#'                             a time value which is actually present in the data, i.e.
+#'                             a value which appears in the first column of the input file.
+#'
+#' @param overrideMaxCanberra Maximal deviation (d_max) using Canberra distance
+#'                            (overrideMaxCanberra). A value of -1 will let the script select
+#'                            these time points automatically. Otherwise, specify a time value
+#'                            which is actually present in the data, i.e. a value which appears
+#'                            in the first column of the input file.
+#'
+#' @param tref Disturbance event (tref). Otherwise, specify a time value which is actually present
+#'             in the data, i.e. a value which appears in the first column of the input file.
+#'
 #' @param time.col Name of column in sample_data i.e. metadata specifying
-#' time points.
-#' @return A data frame with stability proprties.
+#'                 time points.
+#'
+#' @return A data frame with stability properties.
 #'
 #' @seealso To be used internally by \code{\link{stability_properties}}
+#'
 #' @importFrom vegan vegdist
+#'
+#' @importFrom phyloseq ntaxa
+#'
 #' @references
 #' \itemize{
-#' \item{}{Liu, Z., et al., (2018). Ecological stability properties of
-#' microbial communities assessed by flow cytometry. mSphere, 3(1), e00564-17.
-#' http://msphere.asm.org/content/3/1/e00564-17
+#' \item{}{Liu, Z., et al. (2018). Ecological stability properties of
+#'         microbial communities assessed by flow cytometry. \emph{mSphere}, 3(1), e00564-17.
+#' \url{http://msphere.asm.org/content/3/1/e00564-17}
 #' }
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #'
 #' @examples
+#' \dontrun{
 #' data(SyncomFiltData)
 #' ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
 #' ps1.sub <- subset_samples(ps1.b5, Time_hr_num >= 120)
 #' dat.stab <- stability_properties(ps1.sub, time.col = "Time_hr")
-#' kable(dat.stab)
+#' head(dat.stab)
+#' }
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
 #' @export
 #' @keywords Anlaysis and visualization
@@ -62,7 +85,7 @@ stability_properties <- function(ps,
                                  overrideMaxCanberra = -1,
                                  tref = -1,
                                  time.col = "Time_hr") {
-  tax_count <- data <- NULL
+  tax_count <- data <- Time <- plotGatesStart <- plotGatesEnd <- NULL
 
   message(paste0("No. of taxa ", ntaxa(ps)))
   message("Normalizing counts to relative abundances")
@@ -109,13 +132,17 @@ stability_properties <- function(ps,
   # This chunk Start
   # get two most abundant gates
   if (!exists("plotGatesStart")) {
-    topGates <- names(sort(referenceState, decreasing = TRUE))[1:2]
+    topGates <- names(sort(referenceState,
+      decreasing = TRUE
+    ))[1:2]
   } else {
     topGates <- plotGatesStart
   }
 
   if (!exists("plotGatesEnd")) {
-    finalTopGates <- names(sort(data[data[1] == experimentEnd, 2:(numberOfGates + 1)], decreasing = TRUE))[1:2]
+    finalTopGates <- names(sort(data[data[1] == experimentEnd, 2:(numberOfGates + 1)],
+      decreasing = TRUE
+    ))[1:2]
   } else {
     finalTopGates <- plotGatesEnd
   }
