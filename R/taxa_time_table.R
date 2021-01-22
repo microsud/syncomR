@@ -4,27 +4,31 @@
 #'
 #' @details The output of this function can be used for functions that require taxa tables in matrix form.
 #' @param ps a \code{\link{phyloseq-class}}
-#' @param normalize TRUE or FALSE uses the normalize function from \code{\link{seqtime}} by Faust et al.
-#' @param time.col Specifiy column containing time variable
+#' @param normalize TRUE or FALSE uses the normalize function from \emph{seqtime} by Faust et al.
+#' @param time.col Specify column containing time variable
 #' @param remove.zero TRUE or FALSE
 #' @return Normalized or raw counts taxa abundance table (taxaare rows and timepoits columns).
 #' @references
 #' \itemize{
 #' \item{}{Faust, K., et al. (2018). Signatures of ecological processes in
-#' microbial community time series. Microbiome, 6(1), 120. https://doi.org/10.1186/s40168-018-0496-2}
+#' microbial community time series. Microbiome, 6(1), 120.
+#' \url{https://doi.org/10.1186/s40168-018-0496-2}}
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #' @examples
+#' \dontrun{
 #' data(SyncomFiltData)
 #' ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
 #' remove_T80 <- c("Ferm_1_5_80", "Ferm_1_6_80", "Ferm_1_8_80")
 #' ps1.sub <- prune_samples(!(sample_names(ps1.b5) %in% remove_T80), ps1.b5)
 #' otu.tb <- taxa_time_table(ps1.sub, normalize = TRUE, time.col = "Time_hr", remove.zero = TRUE)
 #' head(otu.tb)
+#' }
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
 #' @export
-#' @keywords Anlaysis and visualization
+#'
+#' @keywords Analysis and visualization
 
 taxa_time_table <-
   function(ps,
@@ -32,11 +36,10 @@ taxa_time_table <-
            time.col = NULL,
            remove.zero = c(TRUE, FALSE)) {
     otu.mat <- otu.mat2 <- otu.mat3 <- ps.ml <- NULL
+    OTU <- Time <- Abundance <- NULL
 
-    otu.mat <- as.data.frame(abundances(ps))
+    otu.mat <- as.data.frame(microbiome::abundances(ps))
 
-    require(dplyr)
-    require(seqtime)
     ps.ml <- psmelt(ps)
     ps.ml$Time <- as.numeric(ps.ml[, time.col])
 

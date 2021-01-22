@@ -1,0 +1,1462 @@
+---
+title: "Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes"
+author: "Sudarshan A. Shetty"
+date: "`r date()`"
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    toc_float: true
+    code_folding: hide  
+editor_options: 
+  chunk_output_type: console
+---
+
+# Introduction   
+Complexity of the human gut microbiome presents a major challenge for deciphering ecological and metabolic interactions between microbes. A better understanding of the ecological and metabolic interactions within the microbiome is crucial for the development of effective microbiome modulation strategies. Recently, synthetic microbial communities assembled from host-derived strains have received considerable attention for understanding ecological and physiological features of the microbiome. Synthetic microbial communities of the human gut can be studied under controlled conditions either in chemostats, _in-vivo_ in animal models, or in vitro with or without the host component e.g. SHIME or HuMiX respectively. The _in vitro_ gut models allow for sub-daily dense sampling of the microbial community that may not be possible with animal models due to technical and ethical reasons. Combining _in vitro_ gut models with defined microbial communities holds potential for understanding community assembly, structure, sub-daily compositional and functional dynamics as well as plasticity of microbial interactions. Studies employing _in vitro_ gut models till date have applied either batch or continuous single or multi-stage fermentation models. However, an important aspect of the host associated microbiome is the dietary intake cycles of the host that can give rise to stages of excess carbon and energy source and periodic starvation. Both these aspects may have a profound influence on the compositional and functional dynamics of the microbial community. Previous studies have revealed effect of nutrient periodicities on microbial community dynamics and physiological functionality. Nutrient periodicity is an important factor as it may lead to selection of well adapted taxa, affect microbe-microbe interactions and microbe-environment interactions as well as provide an opportunity for invading species to successfully establish in a community. In the human gut, two major sources of carbon and energy are host derived polysaccharide i.e. mucin and host diet. Diet can be highly variable on sub-daily time scales posing a major selective pressure on the microbial community. On the contrary, mucin is a constant and chemically stable source of carbon and energy within a host and shown to promote stability of the gut microbiome. Therefore, a better understanding of responses to situations of part nutrient periodicity and part constant nutrient supply from community to individual taxa level can be useful for disentangling temporal stability and resilience of human gut microbiome. Here, we assembled a synthetic minimal microbiome consisting initially of 15 core gut bacterial strains representing the four prominent phyla present in the human intestinal tract: Actinobacteria, Bacteroidetes, Firmicutes and Verrucomicrobia. Using a combination of metabolite analysis, amplicon and metatranscriptomics sequencing, we investigated their temporal compositional and functional dynamics in presence of sub-daily nutrient pulses. In addition, we tested niche occupation by _Blautia hydrogenotrophica_ (a H2/formate utilizing homoacetogen) in presence of nutrient periodicity and niche availability, effect of removal of acetate and elongated fasting periods on community composition and function.  
+
+This file documents the codes/steps for analysis of the 16S rRNA amplicon and metatranscriptomics sequencing of minimal microbiome. The data was processed and stored as data objects in the `syncomR` package. The codes for data processing can be found in the following folders and files.  
+
+**Amplicon analysis**   
+
+* amplicon_syncom   
+      o 01_dada2_FR_processing.rmd  
+      o 02_phyloseq_data_handling.rmd  
+
+**Metatranscriptomics analysis**   
+
+* mtrans_syncom   
+      o 01_rnaseq_data_processing.rmd   
+
+The analysis reported here makes use of the `syncomR` package in harmony with several other packages which are loaded into the workspace using `library(packagename)` function. At the end of the document all packages used in the analysis together with its versions are listed. Integrated analysis of a different types of data including amplicon, transcriptomics and metabolites is a challenge and currently there are not many tools. The `syncomR` package is being developed for synthetic microbial community data exploration, analysis and visualization using R. This R package will be useful for handling microbial community (MC) data especially dense time series data (processed amplicon, transcriptomics, hplc, etc.). In addition, I hope to make syncomR as an example of research compendium for similar microbiome research and enhance the overall impact of the study.  
+
+```{r, message=FALSE, warning=FALSE}
+### Setup anlaysis 
+suppressPackageStartupMessages({
+  library(syncomR)
+  library(dplyr)
+  library(tidyr)
+  library(seqtime)
+  library(ggpubr)
+  library(scales)
+  library(codyn)
+  library(knitr)
+  library(reshape2)
+  library(ggrepel)
+  library(DESeq2)
+})
+
+
+### Assign colors
+
+strain.colors<-c(Akkermansia_muciniphila ='#e6194b', Bifidobacterium_adolescentis = '#3cb44b', 
+                 Collinsella_aerofaciens= '#ffe119', Bacteroides_ovatus ='#4363d8', 
+                 Bacteroides_xylanisolvens='#f58231', Agathobacter_rectalis ='#911eb4', 
+                 Anaerobutyricum_soehngenii ='#46f0f0', Eubacterium_siraeum ='#f032e6', 
+                 Blautia_hydrogenotrophica='#bcf60c', Coprococcus_catus='#fabebe', 
+                 Flavonifractor_plautiia ='#008080', Roseburia_intestinalis ='#e6beff', 
+                 Faecalibacterium_prausnitzii ='#9a6324', Blautia_obeum= '#222021', 
+                 Ruminococcus_bromii='#800000', Subdoligranulum_variabile='#26e798', 
+                 Acetate = '#808000', Butyrate = '#ffd8b1', 
+                 Formate = '#000075', Propionate = '#808080', 
+                 Lactate = '#ffffff', Succinate = '#000000')
+
+fasting_cols <- c("#1b9e77", "#d95f02", "#7570b3")
+
+fer_cols <- c(`Bioreactor A`= "#b2182b", `Bioreactor B`="#2166ac", `Bioreactor C` = "#35978f")
+
+
+```
+
+# Ecological properties of the synthetic minimal microbiome   
+
+```{r, warning=FALSE, message=FALSE, eval=FALSE, echo=FALSE}
+# if running for first time change eval==FALSE to TRUE
+#### Directories 
+dir.create("amplicon_syncom")
+dir.create("amplicon_syncom/data")
+dir.create("amplicon_syncom/code")
+dir.create("amplicon_syncom/figures")
+dir.create("amplicon_syncom/tables")
+```
+
+## Coverage analysis   
+
+```{r coverage-analysis, fig.height = 3, fig.width = 8, fig.align = "center", fig.cap="Fig.1"}
+
+data(SyncomFiltData) 
+fasting_cols <- c("#b3de69", "#fb8072", "#80b1d3") 
+cov.plot <- taxa_coverage(SyncomFiltData, coverage = 0.9999, 
+                          time.column = "Time_hr_num", 
+                          shape.variable = "Acetate_Feed", 
+                          color.variable = "Fasting", 
+                          color.pal = fasting_cols, y.breaks = seq(0, 16, 1), y.limits = c(9, 16)) 
+
+cov.plot <- cov.plot + facet_wrap(~ StudyIdentifier) 
+
+cov.plot + theme_syncom()
+```
+
+We see all species tend to be found in at all timepoints. However, Bioreactor C seems to have 16 species even at initial timepoints. This suggests that there is like cross-contamiation or misslabelling.   
+
+## Temporal Composition   
+
+```{r composition-analysis, fig.align = "center"}
+
+ps.sycom.rel <- microbiome::transform(SyncomFiltData, "compositional")
+# Select only until 100
+ps.sycom.rel.sub <- subset_samples(ps.sycom.rel, Time_hr_num <=100)
+p <- plot_syncom_composition(ps.sycom.rel.sub,
+                             type = "bar",
+                             time.col = "Time_hr_num",
+                             taxa.level = "OTU",
+                             sp.fill.pal = strain.colors, facet.var = "StudyIdentifier")
+print(p)
+```
+
+Here, we clearly see that *B. hydrogenotrophica* is found in 0hr, 8hr, 28hr, 75.5hr samples in __Bioreactor C__. *B. hydrogenotrophica* was added after 152hr in all the bioreactors. There is either cross-contamination and/or mixing of sample barcodes/mis-labelling. Will __skip the Bioreactor C__ data for rest of the analysis.  
+
+Now will create the coverage plot for Bioreactor A and Bioreactor B.  
+```{r fig.height = 4, fig.width = 10, fig.align = "center"}
+data(SyncomFiltData) 
+#fasting_cols <- c("#b3de69", "#fb8072", "#80b1d3") 
+ps1 <- subset_samples(SyncomFiltData, StudyIdentifier !="Bioreactor C")
+cov.plot.sub <- taxa_coverage(ps1, coverage = 0.9999, 
+                              time.column = "Time_hr_num", 
+                              shape.variable = "Acetate_Feed", 
+                              color.variable = "Fasting", 
+                              color.pal = fasting_cols, y.breaks = seq(0, 16, 1), y.limits = c(12, 16)) 
+
+cov.plot.sub <- cov.plot.sub + facet_wrap(~ StudyIdentifier, ncol = 1, nrow =2) + theme_syncom()
+#cov.plot.sub
+##ggsave("amplicon_syncom/figures/figure 1 cov.plot.pdf", height = 5, width = 8)
+```
+
+
+```{r composition-analysis-area, fig3, fig.height = 8, fig.width = 16, fig.align = "center"}
+
+ps1.sycom.rel <- microbiome::transform(ps1, "compositional")
+# Select only Bioreactor A and B
+#ps.sycom.rel.rec <- subset_samples(ps.sycom.rel, StudyIdentifier !="Bioreactor C")
+p <- plot_syncom_composition(ps1.sycom.rel,
+                             type = "area",
+                             time.col = "Time_hr_num",
+                             taxa.level = "OTU",
+                             sp.fill.pal = strain.colors, facet.var = "StudyIdentifier")
+p <- p + theme_syncom() + labs(fill = "Taxa")
+
+
+##ggsave("amplicon_syncom/figures/figure 2 comp areaplot.pdf", height = 5, width = 8)
+```
+
+```{r fig.height = 8, fig.width = 16,fig.align = "center"}
+library(patchwork)
+fig.1 <- cov.plot.sub + p
+fig.1 <- fig.1 + plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 14))
+fig.1
+```
+
+**Fig. 1: Co-existence and temporal community composition of minimal microbiome.** a) Number of strains that account for >99% of the total abundance in the minimal microbiome. b) Relative proportions of individual strains over the course of the experiment. 
+
+
+## Temporal trajectory of individual taxa  
+Now, we will look at individual taxa abundances over time.  
+
+```{r Temp-tracjectory, fig.height = 14, fig.width = 16}
+
+#ps.sycom.rel.rec <- subset_samples(ps.sycom.rel, StudyIdentifier !="Bioreactor C")
+fer_cols <- c(`Bioreactor A`= "#b2182b", `Bioreactor B`="#2166ac", `Bioreactor C` = "#35978f")
+
+tax.trac <- plot_trajectory(ps1.sycom.rel,
+                            time.col = "Time_hr",
+                            type = "all",
+                            group.variable = "StudyIdentifier",
+                            color.pal = fer_cols,
+                            transform.counts = "compositional")
+tax.trac <- tax.trac + theme_syncom(base_size = 10)
+print(tax.trac + geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") )
+#ggsave("amplicon_syncom/figures/figure 3 taxa trajectory all plot.pdf", height = 8, width = 16)
+
+```
+
+**Fig. 2: Temporal trajectories of individual strains in the minimal microbiome. The vertical red line denotes the timepoint when B. hydrogenotrophica was introduced in the minimal microbiome.**   
+We observe a highly dynamic abundance profile for majority of the taxa. We will zoom  specifically at the some of the taxa of interest.   
+
+```{r}
+# Akkermansia
+p.amuc <- plot_trajectory(ps1.sycom.rel,
+                          taxa.level = "Species",
+                          taxa = "Akkermansia_muciniphila",
+                          time.col = "Time_hr",
+                          type = "Species",
+                          group.variable = "StudyIdentifier",
+                          color.pal = fer_cols,
+                          transform.counts = "compositional") + 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d")
+#p.amuc 
+
+
+# Bacteroides xylanisolvens
+p.bxyl <- plot_trajectory(ps1.sycom.rel,
+                          taxa.level = "Species",
+                          taxa = "Bacteroides_xylanisolvens",
+                          time.col = "Time_hr",
+                          type = "Species",
+                          group.variable = "StudyIdentifier",
+                          color.pal = fer_cols,
+                          transform.counts = "compositional")+ 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d")
+#p.bxyl #+ geom_vline(xintercept = c(160,264))
+
+# Bacteroides_ovatus
+p.bova <- plot_trajectory(ps1.sycom.rel,
+                          taxa.level = "Species",
+                          taxa = "Bacteroides_ovatus",
+                          time.col = "Time_hr",
+                          type = "Species",
+                          group.variable = "StudyIdentifier",
+                          color.pal = fer_cols,
+                          transform.counts = "compositional")+ 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d")
+#p.bova 
+# Blautia_hydrogenotrophica
+p.bhyd <- plot_trajectory(ps1.sycom.rel,
+                          taxa.level = "Species",
+                          taxa = "Blautia_hydrogenotrophica",
+                          time.col = "Time_hr",
+                          type = "Species",
+                          group.variable = "StudyIdentifier",
+                          color.pal = fer_cols,
+                          transform.counts = "compositional")+ 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d")
+#p.bhyd 
+
+# Blautia_obeum
+p.bobe <- plot_trajectory(ps1.sycom.rel,
+                          taxa.level = "Species",
+                          taxa = "Blautia_obeum",
+                          time.col = "Time_hr",
+                          type = "Species",
+                          group.variable = "StudyIdentifier",
+                          color.pal = fer_cols,
+                          transform.counts = "compositional")+ 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d")
+
+#p.bobe 
+
+# Anaerobutyricum_soehngenii
+p.asoe <- plot_trajectory(ps1.sycom.rel,
+                          taxa.level = "Species",
+                          taxa = "Anaerobutyricum_soehngenii",
+                          time.col = "Time_hr",
+                          type = "Species",
+                          group.variable = "StudyIdentifier",
+                          color.pal = fer_cols,
+                          transform.counts = "compositional")+ 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d")
+#p.asoe 
+
+
+```
+
+```{r fig.height = 8, fig.width = 12 }
+p.tc <- ggpubr::ggarrange(p.amuc, p.bova, p.bxyl, p.bhyd, 
+                          p.bobe, p.asoe, common.legend = T)
+p.tc + theme_syncom()
+```
+
+**Fig. 2: Temporal trajectories of individual strains in the minimal microbiome. The vertical red line denotes the timepoint when _B. hydrogenotrophica_ was introduced in the minimal microbiome.** 
+
+Previosuly, the species assignment gave ambigous results for *B. hydrogenotrophica* and *B. obeum*. However, after some optimization of parameters it has allowed us to specifically differentiate between *B. hydrogenotrophica* and *B. obeum*.    
+
+## Proxy growth rate from abundance data    
+The maximum change in abundance is labelled for each of the taxa.  
+The calculation is based on abundance, where i use log(present abundance-past abudnance/past abundance), e.g abundance at time point 24h - timepoint 12h/timepoint 12h. This approach can has allowed us to identify _time-dependent_ pattern of "growth" for individual taxa.  
+
+```{r fig.width=16, fig.height=12, warning=FALSE, message=FALSE}
+
+data(SyncomFiltData)
+bioA <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+p.bioA <- plot_growth_rate(bioA, rarefy = TRUE, depth=min(sample_sums(bioA)))
+p.bioA <- p.bioA + 
+  theme_syncom() + 
+  scale_color_manual(values=strain.colors) + ggtitle("Bioreactor A")
+
+bioB <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+p.bioB <- plot_growth_rate(bioB, rarefy = TRUE, depth=min(sample_sums(bioB)))
+p.bioB <- p.bioB + 
+  theme_syncom() + scale_color_manual(values=strain.colors) + ggtitle("Bioreactor B")
+
+p.bioA / p.bioB+ plot_layout(guides = "collect")
+
+
+```
+
+**Fig. 3: A proxy growth rate i.e rate of change in mean abundance over time. The maximum of the mean growth rate for each taxa is highlighted by labelling.**  
+First visual looks suggests "equillibrium" in abundance changes. While the *key stone* taxa, _A. muciniphila_, _B. xylanisolvens_ and _F. prausnitzii_ seem to have reached "equillibrium" early and stablized abundances. Whereas, other taxa show either increase or decrease in first few timepoints and later achieve "equllibrium" abundance "range".   
+
+
+## Taylor's law  
+One of few generalities in ecology. Slopes lower than 2 have been suggesed to be caused by [competition](https://www.nature.com/articles/nature01471). https://www.nature.com/articles/332721a0 .
+
+```{r fwarning=FALSE, message=FALSE}
+data("SyncomFiltData")
+ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+otu.b5.rel <- taxa_time_table(ps1.b5, normalize = TRUE, time.col= 'Time_hr', remove.zero = TRUE)
+
+ps1.b6 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+otu.b6.rel <- taxa_time_table(ps1.b6, normalize = TRUE, time.col= 'Time_hr', remove.zero = TRUE)
+
+f5.taylor <- taylor(otu.b5.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor A", label = FALSE, plot = TRUE)
+f6.taylor <- taylor(otu.b6.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor B", label = FALSE, plot = TRUE)
+
+```
+
+**Fig. 4: Scaling property of species abundances.** Taylor's law applicability for minimal microbiome in both bioreactors. The R package Seqtime was used for testing the power law fit.  
+
+Save the plots.  
+```{r taylor-saveplot, echo=FALSE, eval=FALSE}
+pdf("amplicon_syncom/figures/Figure taylor_law_Bioreactor A.pdf", height = 4, width = 6)
+#par(mfrow=c(3,1))
+f5.taylor <- taylor(otu.b5.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor A", label = FALSE, plot = TRUE)
+dev.off()
+
+pdf("amplicon_syncom/figures/Figure taylor_law_Bioreactor B.pdf", height = 4, width = 6)
+#par(mfrow=c(3,1))
+f6.taylor <- taylor(otu.b6.rel, type = "taylor", boot = 1000, interval = "prediction",
+                    lower.conf = 0.025, upper.conf = 0.975, pseudo = 0,
+                    col = "black", header = "Bioreactor B", label = FALSE, plot = TRUE)
+
+dev.off()
+```
+
+
+## Temporal inquality  
+
+Temporal inquality can give us some clues about fluctuations in species abundances and if there is disproportionate dominance.  
+
+```{r temporal-inquality }
+
+ps.sycom.sub <- subset_samples(SyncomFiltData, StudyIdentifier !="Bioreactor C")
+p.temp.div <- temporal_diversity(ps.sycom.sub, 
+                                 time.col = 'Time_hr_num', 
+                                 div.measure = "gini") +  geom_point(aes(shape = Fasting, color = Fasting), size = 2) + scale_color_manual(values = fasting_cols) 
+p.temp.div <- p.temp.div + scale_fill_manual(values = fasting_cols) + 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+p.temp.div <- p.temp.div + facet_wrap(~StudyIdentifier, ncol = 1, nrow = 2) + theme_syncom()
+p.temp.div 
+
+
+#ggsave("amplicon_syncom/figures/figure 4 inequality plot.pdf", height = 5, width = 8)
+```
+**Fig. 5: Temporal inequality in minimal microbiome.** Gini index was used as a measure of inequality. The vertical lines represent red: B. hydrogenotrophica addition; blue: 2X carbohydrate pulse; green: Acetate discontinued from feed; lavender: first samples after elongated fasting; brown: After period of double dilution rate.  
+We see a trend similar in both bioreactors, inequality gradually increases and then decreases. There is no mono-dominance observed. In natural ecosytems such as human gut, we see that it is mostly above 0.95. In our bioreactors, there is no immigration and multiple-substrates (niches) that may give rise to this observation.  
+```{r}
+sub.ga <- subset(p.temp.div$data, p.temp.div$data$StudyIdentifier == "Bioreactor A")
+#mean(sub.ga$Inequality)
+#sd(sub.ga$Inequality)
+#DT::datatable(sub.ga)
+sub.gb <- subset(p.temp.div$data, p.temp.div$data$StudyIdentifier == "Bioreactor B")
+
+```
+
+
+## Temporal succession of the community  
+Measuring temporal turnover in ecological communities.    
+We will check the community dissimilarity over time. Here, we will compare subsequent timepoints as was done previously by [Guittar et. al. 2019 Nat Comm]( https://www.nature.com/articles/s41467-019-08377-w) article.  
+This will allow to measure dissimilarity between successive time points (short-term variability).  
+
+```{r fig.width=12, fig.height=4}
+
+data(SyncomFiltData)
+ps.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+p.a <- temporal_turnover(ps.b5, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "subsequent") 
+#head(p$data)
+p.a <- p.a + geom_point(size = 2) 
+p.a <- p.a + theme_syncom() + ggtitle("Bioreactor A") +
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+
+
+ps.b6 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+p.b <- temporal_turnover(ps.b6, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "subsequent") 
+#head(p$data)
+p.b <- p.b + geom_point(size = 2) #+ geom_label(aes(label = com))
+p.b <- p.b + theme_syncom() + ggtitle("Bioreactor B") + 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+
+temp.div <- p.a  + p.b + plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 14))
+
+temp.div
+#temp_turn <- ggpubr::ggarrange(p.a,p.b, common.legend = T, nrow = 2, ncol = 1, labels = c("Bioreactor A", "Bioreactor B"))
+
+#ggsave("amplicon_syncom/figures/figure 5 temporal_turnover plot.pdf", height = 5, width = 8)
+
+```
+**Fig. 6: Short-term variability in minimal microbiome.**  
+The median dissimilarity (Canberra distance) for microbiota composition between subsequent timepoints for both the bioreactors was  0.23, indicating for bioreactor A min dissimilarity was between 76hr and 80hr, maximum was between 4-8hr. For bioreactor B minimum dissimilarity was between 76hr and 80hr, 0.09 and maximum was between 148 and 152hr. The rate of change was 0.0018 and 0.0019 for bioreactor A and B (p<0.0001) revealing a low directional change with stochastic variation.  
+
+Distances between timepoints  
+```{r eval=FALSE}
+ba.suc <- p.a$data
+bb.suc <- p.b$data
+
+DT::datatable(ba.suc)
+summary(ba.suc$dist)
+
+```
+
+
+```{r eval=FALSE}
+DT::datatable(bb.suc)
+summary(bb.suc$dist)
+```
+
+
+## Comparison to 24h timepoint  
+This can be used to test long term variability in the community.  
+
+```{r fig.width=12, fig.height=4}
+
+data(SyncomFiltData)
+ps.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+ps.b5 <- subset_samples(ps.b5, Time_hr_num >= 24)
+
+p.a <- temporal_turnover(ps.b5, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "start") 
+#head(p$data)
+p.a <- p.a + geom_point(size = 2) 
+p.a <- p.a + theme_syncom() + ggtitle("Bioreactor A") +
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+
+
+ps.b6 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+ps.b6 <- subset_samples(ps.b6, Time_hr_num >= 24)
+
+p.b <- temporal_turnover(ps.b6, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "start") 
+#head(p$data)
+p.b <- p.b + geom_point(size = 2) #+ geom_label(aes(label = com))
+p.b <- p.b + theme_syncom() + ggtitle("Bioreactor B") + 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+
+temp.div <- p.a  + p.b + plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 14))
+
+temp.div
+#temp_turn <- ggpubr::ggarrange(p.a,p.b, common.legend = T, nrow = 2, ncol = 1, labels = c("Bioreactor A", "Bioreactor B"))
+
+##ggsave("amplicon_syncom/figures/figure 5 temporal_turnover plot.pdf", height = 5, width = 8)
+
+```
+**Fig. 7: Long-term variability in minimal microbiome.**  We observe variability somewhat stabilizes in both bioreactors.  
+
+## Comparison to last 460h timepoint  
+This can be used to test long term variability in the community.  
+
+```{r fig.width=12, fig.height=4}
+
+data(SyncomFiltData)
+ps.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+p.a <- temporal_turnover(ps.b5, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "final") 
+#head(p$data)
+p.a <- p.a + geom_point(size = 2) 
+p.a <- p.a + theme_syncom() + ggtitle("Bioreactor A") +
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+
+
+ps.b6 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+p.b <- temporal_turnover(ps.b6, tree =NULL,
+                         time.col = 'Time_hr_num', 
+                         method = "canberra", 
+                         compositional = TRUE,
+                         compared.to = "final") 
+#head(p$data)
+p.b <- p.b + geom_point(size = 2) #+ geom_label(aes(label = com))
+p.b <- p.b + theme_syncom() + ggtitle("Bioreactor B") + 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") 
+
+temp.div <- p.a  + p.b + plot_annotation(tag_levels = 'A') & 
+  theme(plot.tag = element_text(size = 14))
+
+temp.div
+#temp_turn <- ggpubr::ggarrange(p.a,p.b, common.legend = T, nrow = 2, ncol = 1, labels = c("Bioreactor A", "Bioreactor B"))
+
+##ggsave("amplicon_syncom/figures/figure 5 temporal_turnover plot.pdf", height = 5, width = 8)
+
+```
+
+**Fig. 8: Converging community towards endpoint.**  We observe that both the bioreactor show decreasing dissimilarity and convergence towards the final state.  
+
+
+```{r eval=FALSE}
+tempt.ba <- p.a$data
+sort(tempt.ba$dist)
+ggbarplot(tempt.ba, "com", "dist") + rotate_x_text()
+
+tempt.bb <- p.b$data
+sort(tempt.bb$dist)
+ggbarplot(tempt.bb, "com", "dist") + rotate_x_text()
+```
+
+The patterns for dissimilarty seems to be similar with some lose shape in bioreactor B. 
+
+## Ecological Stability  
+Testing for ecological properties of stability, resilience and resistance.  
+For this I tested the methods reported in "Ecological Stability Properties of Microbial Communities Assessed by Flow Cytometry" by [Liu et al., 2018](http://msphere.asm.org/content/3/1/e00564-17).
+The R script is adapted as functions within the `syncomR` package for convinient access.  
+Note: The challenge is in choosing a reference phase
+Here, I choose the timepoints based on temporal turnover analysis.  
+
+
+### Bioreactor A  
+```{r }
+#library(syncomR)
+data("SyncomFiltData")
+ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor A")
+#ps1.sub <- prune_samples( !(sample_names(ps1.b5) %in% remove_T80), ps1.b5)
+ps1.sub <- subset_samples(ps1.b5, Time_hr_num >= 24)
+dat.stab <- stability_properties(ps1.sub, time.col = "Time_hr")
+
+p_ba <- plot_nmds_stability(dat.stab)
+p_ba <- p_ba$plot + theme_syncom() + xlab("NMDS1") + ylab("NMDS2")+ ggtitle("Bioreactor A")
+#ggsave("amplicon_syncom/figures/figure 6 nmds_stability_bioreactorA.pdf", height = 3, width = 5)
+
+```
+
+ 
+
+Testing for distance overtime and resilience.  
+
+```{r plot-stab-bioreactor-A}
+plot_stability_properties(dat.stab, property = "dist.ot")
+
+plot_stability_properties(dat.stab, property = "resilience.ot.eucl")
+
+plot_stability_properties(dat.stab, property = "resilience.ot.canb")
+
+plot_stability_properties(dat.stab, property = "resilience.oline")  
+
+```
+
+Online resilience shows there are timepoints where community reaches back to its reference state. The return is shown by points reaching 0 (dashed line).  
+The minimal microbiome exhibits movement in reference community states
+* Sref : Starting community *Red circle*  
+* Smax : Maximal distance from Sref *Triangles*  
++ Red : Canberra distance  
++ Blue: Eucledian  
+* Reference timepoint communities: Grey circles   
+
+```{r eval=FALSE, echo=FALSE}
+
+pdf("amplicon_syncom/figures/figure 7a dist_overtime_bioreactorA.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "dist.ot")
+dev.off()
+
+
+pdf("amplicon_syncom/figures/figure 7b resilience_eucl_bioreactorA.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "resilience.ot.eucl")
+dev.off()
+
+
+pdf("amplicon_syncom/figures/figure 7c resilience_canb_bioreactorA.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "resilience.ot.canb")
+dev.off()
+
+pdf("amplicon_syncom/figures/figure 7d resilience_oline_bioreactorA.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "resilience.oline")
+dev.off()
+
+```
+
+
+
+### Bioreactor B   
+```{r }
+#library(syncomR)
+ps1.b6 <- subset_samples(SyncomFiltData, StudyIdentifier== "Bioreactor B")
+#ps1.sub <- prune_samples( !(sample_names(ps1.b5) %in% remove_T80), ps1.b5)
+ps1.sub <- subset_samples(ps1.b6, Time_hr_num >= 24)
+dat.stab <- stability_properties(ps1.sub, time.col = "Time_hr")
+
+p_bb <- plot_nmds_stability(dat.stab)
+p_bb <- p_bb$plot + theme_syncom()+ xlab("NMDS1") + ylab("NMDS2") + ggtitle("Bioreactor B")
+p_bb
+#ggsave("amplicon_syncom/figures/figure 8 nmds_stability_bioreactorB.pdf", height = 3, width = 5)
+
+p_ba + p_bb
+```
+
+**Fig. 10: NMDS plot showing transition in community over time.**  In both bioreactors, the community moves within the "reference state (gery points)". Thus, despite high fluctuations in nutrient resources and perturbations, there few timepoints where transitions are drastic.   
+
+The minimal microbiome exhibits movement in reference community states
+* Sref : Starting community *Red circle*  
+* Smax : Maximal distance from Sref *Triangles*  
++ Red  : Canberra distance  
++ Blue : Eucledian  
+* Reference timepoint communities: Grey circles    
+
+Testing for distance overtime and resilience. 
+
+```{r plot-stab-bioreactor-B}
+
+plot_stability_properties(dat.stab, property = "dist.ot")
+
+plot_stability_properties(dat.stab, property = "resilience.ot.eucl")
+
+plot_stability_properties(dat.stab, property = "resilience.ot.canb")
+
+plot_stability_properties(dat.stab, property = "resilience.oline")
+
+```
+
+Online resilience shows there are timepoints where community returns back to its reference state. The return is shown by points reaching 0 (dashed line).  
+
+```{r eval=FALSE, echo=FALSE}
+
+pdf("amplicon_syncom/figures/figure 9a dist_overtime_bioreactorB.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "dist.ot")
+dev.off()
+
+pdf("amplicon_syncom/figures/figure 9b resilience_eucl_bioreactorB.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "resilience.ot.eucl")
+dev.off()
+
+pdf("amplicon_syncom/figures/figure 9c resilience_canb_bioreactorB.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "resilience.ot.canb")
+dev.off()
+
+pdf("amplicon_syncom/figures/figure 9d resilience_oline_bioreactorB.pdf", height = 5, width = 8)
+plot_stability_properties(dat.stab, property = "resilience.oline")
+dev.off()
+
+```
+
+
+### Quantifying temporal dynamics     
+
+Other than the above mentioned approaches, there other others used widely in macro-ecology. These were tested below.  
+
+```{r}
+data(SyncomFiltData)
+ps.sycom.sub <- subset_samples(SyncomFiltData, StudyIdentifier !="Bioreactor C")
+ps.sycom.sub <- microbiome::transform(ps.sycom.sub, "compositional")
+
+ps.sycom.df <- psmelt(ps.sycom.sub)
+
+codyn.df <- ps.sycom.df[,c("StudyIdentifier","Time_hr", "Species", "Abundance")]
+
+```
+
+
+```{r results='asis'}
+
+codyn.df$StudyIdentifier <- as.factor(codyn.df$StudyIdentifier)
+codyn.df$Time_hr <- as.integer(codyn.df$Time_hr)
+
+```
+
+**Rank clocks** highlight that there is fluctuations in the relative abundance of dominant species. *B. xylanisolvens* and *A. muciniphila* show highest fluctuations over time.  
+
+https://github.com/NCEAS/codyn/blob/master/vignettes/Temporal_Diversity_Indices.Rmd
+```{r echo=FALSE}
+aggdat <- aggregate(Abundance ~ Species * Time_hr * StudyIdentifier, 
+                    data = codyn.df, 
+                    FUN = mean)
+ggplot(aggdat, aes(Time_hr, Abundance, color = Species)) + 
+  geom_line(size = 1) + coord_polar() + theme_bw() + facet_wrap(~StudyIdentifier) +
+  ggtitle("Dominant species abundances") + scale_color_manual(values = strain.colors) + theme(strip.background = element_blank(),
+                                                                                              strip.text = element_text(size = 16))
+
+#ggsave("amplicon_syncom/figures/figure 10 abundance clock.pdf", height = 14, width = 14)
+```
+**Fig. 11: Rank clocks showing changes in relative abundances of individual taxa in community over time.**    
+here, relative abundace comparison suggests high variation in dominant taxa _A. muciniphila_, _B. xylanisolvens_ and _F. prausnitzii_. This shows that if relative abundaces are calcualted the mathematical dependency may suggests high variaton although it individual level they may have reach equillibrium. As shown in proxy growth rate analysis.  
+
+Pattern of variability within a community.  
+```{r  }
+rate.res <- rate_change(df=codyn.df,
+                        time.var = "Time_hr",
+                        species.var = "Species",
+                        abundance.var = "Abundance", 
+                        replicate.var = "StudyIdentifier")
+rownames(rate.res) = NULL
+kable(rate.res)
+# https://www.semanticscholar.org/paper/A-method-to-determine-rates-and-patterns-of-in-Collins-Micheli/927fce58d532adc060f68609174124280cfbb6b1
+comm.res <- rate_change_interval(df=codyn.df,
+                                 time.var = "Time_hr",
+                                 species.var = "Species",
+                                 abundance.var = "Abundance", 
+                                 replicate.var = "StudyIdentifier")
+rate_change_p <-
+  ggplot(comm.res, aes(interval, distance, color = StudyIdentifier)) + facet_wrap( ~
+  StudyIdentifier) +
+  geom_point() + scale_color_manual(values = fer_cols) + stat_smooth(
+  method = "lm",
+  se = T,
+  size = 2,
+  color = "black"
+  ) + theme_syncom() + stat_regline_equation(aes(label =  paste(..eq.label.., ..rr.label.., sep = "~~~~")))
+rate_change_p
+#ggsave("amplicon_syncom/figures/figure 11 rate change.pdf", height = 4, width = 6)
+
+```
+
+**Fig. 12: Rate of change in community over time.**    
+
+Directional change in the two bioreactors is similar. Both the communities are showing similar behaviours in species abundances.     
+
+__Mean rank shifts (MRS)__ are calculated as the average difference in species' ranks between consecutive time periods, among species that are present across the entire time series. MRS is useful to check if both the communities in bioreactors show similar transitions ovcer time.    
+
+```{r fig.width=16, fig.height=6}
+syncom_rankshift <- rank_shift(df=codyn.df,
+                               time.var = "Time_hr",
+                               species.var = "Species",
+                               abundance.var = "Abundance", 
+                               replicate.var = "StudyIdentifier")
+#Select the final time point from the returned time.var_pair
+kable(head(syncom_rankshift))
+syncom_rankshift$year <- syncom_rankshift$year_pair
+
+syncom_rankshift <- syncom_rankshift %>% separate(year, c("A","B"), sep = "([\\-])")
+syncom_rankshift$time <- as.numeric(syncom_rankshift$B)
+
+
+ggplot(syncom_rankshift, aes(time, MRS, color=StudyIdentifier)) + geom_point(size=2, alpha=0.6)+
+  geom_line(size= 1)+ scale_color_manual(values = fer_cols) + 
+  geom_vline(xintercept = 152, size=3, alpha=0.6, color="#e41a1c") +
+  geom_vline(xintercept =224, size=3, alpha=0.6, color = "#377eb8")+ 
+  geom_vline(xintercept = 264, size=3, alpha=0.6, color = "#4daf4a") + 
+  geom_vline(xintercept = 408, size=3, alpha=0.6, color = "#984ea3") +
+  geom_vline(xintercept = 438, size=3, alpha=0.6, color = "#a6761d") + 
+  annotate("text",x=c(152,224,264,408, 438),y=c(2.7, 2.5, 2.0,2.7,2.5),label=c("B.hydrogenotrophica",
+                                                                               "2X Carbohydrates",
+                                                                               "Acetate Discontinued",
+                                                                               "First Sample Elongated Fasting",
+                                                                               "After Double Dilution"),hjust=0) +
+  xlim(0,650)+ theme_syncom()
+
+#ggsave("amplicon_syncom/figures/figure 12 rank shift.pdf", height = 4, width = 14)
+
+```
+
+**Fig. 13: MRS in community over time.**    
+We see that while most timepoint both bioreactors show similar trends, there are times where the two communities diverge demonstrating that there is some stochasticity in response to changes such as diet spikes and perturbations.  
+### Synchrony and Asynchrony   
+
+[Saski](https://besjournals.onlinelibrary.wiley.com/doi/abs/10.1111/1365-2745.13151).  
+[Wilcox](https://onlinelibrary.wiley.com/doi/full/10.1111/ele.12861)   
+Degree of synchrony in species abundances within a community over time. Gross et al. (2014), compares the average correlation of each individual species with the rest of the aggregated community. The value ranges from -1 to 1  where -1 is perfect asynchrony and 1 is perfect synchrony. Asynchrony can explain some stability of the system. There is differential response of the community and may be the fluctuations over time are different between deifferent species with similar functionality?        
+
+```{r}
+
+syncom_synchrony_Loreau <- codyn::synchrony(df=codyn.df,
+                                            time.var = "Time_hr",
+                                            species.var = "Species",
+                                            abundance.var = "Abundance", 
+                                            replicate.var = "StudyIdentifier",
+                                            metric = "Gross")
+kable(syncom_synchrony_Loreau)
+```
+
+# Functional dynamics of the synthetic minimal microbiome  
+
+As a measure of function, we measured the major short chain fatty acids i.e. acetate, butyrate, propionate, lactate, formate and succinate.  
+
+## Short chain fatty acids analysis  
+
+The SCFA analysis was done on the LC5XXXX HPLC machine.   
+
+```{r fig.align='center', fig.height=4, fig.width=10}
+colorsSCFA <- c(Acetate = "#CBD588", Propionate = "#5F7FC7", 
+                Butyrate = "orange", Isobutyrate= "#DA5724", 
+                Formate ="#508578", Lactate = "#CD9BCD", 
+                Glucose = "#AD6F3B", Fructose = "#673770",
+                Succinate = "#D14285")
+
+hplc_data <- read.csv("inst/exdata/hplc/hplc_first_check.csv", 
+                      row.names = 1, 
+                      header = T, 
+                      stringsAsFactors = F)
+hplc_data <- as.matrix(t(hplc_data[,c(1:8)]))
+ps1.hplc <- SyncomFiltData
+tax_table(ps1.hplc) <- NULL
+otu_table(ps1.hplc) <- otu_table(hplc_data, taxa_are_rows = T)
+hplc.df <- psmelt(ps1.hplc)
+#hplc.df <- subset(hplc.df, OTU != "Acetate")
+
+plot.hplc <- ggline(hplc.df, "Time_hr_num", "Abundance", 
+             color = "OTU", 
+             facet.by = "StudyIdentifier",
+             ylab = "Concentration (mM)",
+             xlab = "Time (hours)", legend = "right",
+             size = 1) + rotate_x_text() + scale_color_manual("Metabolites", values= colorsSCFA) 
+plot.hplc <- plot.hplc + theme_syncom()
+
+plot.hplc
+#ggsave("mtrans_syncom/figures/figure 10a SFCA.pdf", height = 20, width = 16)
+
+
+```
+
+**Fig. 14: SCFA profile of minimal microbiome over time.**    
+
+
+## SCFA ordination  
+
+```{r fig.align='center', fig.height=4, fig.width=10}
+hplc_data <- read.csv("inst/exdata/hplc/hplc_first_check.csv", 
+                      row.names = 1, 
+                      header = T, 
+                      stringsAsFactors = F)
+hplc.dat <- hplc_data[, c("Acetate", "Isobutyrate", "Succinate", "Butyrate", "Propionate")]
+hplc.meta.dat <- hplc_data[, c("Project","Reactor","Time_hr","Timepoint", "Acetate_Feed","DisturbanceCarbs","Type","BlautiaHydro", "Fasting")]
+
+hplc.dat.log <- abundances(hplc.dat, "log10")
+
+set.seed(2125)
+example_NMDS=metaMDS(hplc.dat, # Our community-by-species matrix
+                     k=3,
+                     distance = "canberra") # The number of reduced dimensions
+#stressplot(example_NMDS)
+example_NMDS.dt <- as.data.frame(example_NMDS$points)
+hplc.meta.dat$NMDS1 <- example_NMDS.dt$MDS1
+hplc.meta.dat$NMDS2 <- example_NMDS.dt$MDS2
+hplc.meta.dat$NMDS3 <- example_NMDS.dt$MDS3
+
+p.nmds.2 <- ggplot(hplc.meta.dat, aes(NMDS1, NMDS2, label = Timepoint)) + geom_point(aes(color = Fasting, shape = Acetate_Feed),size= 4) + scale_color_manual(values=fasting_cols)
+p.nmds.2 <- p.nmds.2 +  geom_text_repel(size = 2) + theme_syncom() 
+p.nmds.2
+
+```
+
+**Fig. 15: SCFA profile of minimal microbiome over time and two clusters?**    
+
+check peaks in HPLC if measurements are correct.
+
+# Metabolic roles of the synthetic minimal microbiome  
+We used 5 complex polysaccharides. Xylan, Pectin, Inulin and Starch as diet origin polysaccharides (DOP) and mucin as host origin polysaccharide. Mucin continously feed after 24hr and DOP was spiked 3 times every day. The time points sampled for RNAseq were **24hr**, **28hr**, **32hr**, **48hr**, **52hr**, **56hr**, **74.5hr**, **152hr**, **176hr**, **240hr**, **248hr** and **264hr**.   
+The raw sequencing data for metatranscriptomics was analysied using a modified version of the SAMSA2 pipeline. The processing steps of samsa2 output are in `01_rnaseq_data_processing.rmd`. The data were formated and made available in `syncomR` package as `SyncomGMM`, `SyncomRawCounts`, `SynComRawRNA` and `SynComRNAKEGG`. For details type in console and view details in *Help* panel of RStudio:
+
+```{r, eval=FALSE}
+# example
+?SyncomGMM
+```
+
+```{r, message=FALSE, warning=FALSE, eval=FALSE, echo=FALSE, eval=FALSE}
+dir.create("mtrans_syncom")
+dir.create("mtrans_syncom/data")
+dir.create("mtrans_syncom/code")
+dir.create("mtrans_syncom/figures")
+dir.create("mtrans_syncom/tables")
+```
+
+ 
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+# devtools::install_github("omixer/omixer-rpmR")
+suppressPackageStartupMessages({
+  library(tidyverse)
+  library(data.table)
+  #library(circlize)
+  library(omixerRpm)
+  library(ggpubr)
+  library(RColorBrewer)
+  library(edgeR)
+})
+```
+
+
+```{r df-fil}
+gmm <- SyncomGMM
+gmm$Taxon <- gsub("Lachnospiraceae_bacterium", "Flavonifractor_plautiia", gmm$Taxon)
+DT::datatable(gmm)
+```
+
+## Correlating GMM co-expression  
+
+```{r}
+ps1 <- SyncomFiltData
+mods <- readRDS("inst/extdata/data_files/mdbmm_gmm_out.rds" )
+
+modsDF <- cbind(mods@annotation, slot(mods, "abundance"))
+
+#system.file("extdata", "2012.csv", package = "syncomR")
+
+#modsDF
+curatedGMM_names <- read.table("inst/extdata/data_files/ModulesCustom/CuratedGMM_names.txt", header=F, sep="\t")
+head(curatedGMM_names)
+
+fil_list <- modsDF$Module
+curatedGMM_names_filt <- filter(curatedGMM_names, curatedGMM_names$V1 %in% fil_list)
+
+dim(curatedGMM_names_filt)
+#curatedGMM_names_filt$V1
+colnames(curatedGMM_names_filt) <- c("Module", "Names")
+
+module_df <- merge(modsDF, curatedGMM_names_filt, by.x="Module")
+```
+
+```{r Correlating-GMM-co-expression, warning=FALSE}
+mods_sum <- modsDF %>% group_by(Module) %>% 
+  summarize(sum(F5T24), sum(F5T48), sum(F5T176), sum(F5T240), sum(F5T264), sum(F6T24),sum(F6T48), sum(F6T176), sum(F6T240), sum(F6T264), sum(F8T24), sum(F8T48), sum(F8T176), sum(F8T240), sum(F8T264), sum(F5T28),sum(F5T32), sum(F5T52), sum(F5T56), sum(F5T74A5), sum(F5T152), sum(F5T248), sum(F6T28),sum(F6T32), sum(F6T52),  sum(F6T56), sum(F6T74A5), sum(F6T152), sum(F6T248), sum(F8T28), sum(F8T32), sum(F8T52), sum(F8T56),  sum(F8T74A5), sum(F8T152), sum(F8T248))
+
+colnames(mods_sum) <- c("Module","F5T24", "F5T48", "F5T176", "F5T240", "F5T264", "F6T24", "F6T48",	  "F6T176", "F6T240",	"F6T264", "F8T24", "F8T48", "F8T176", "F8T240", "F8T264", "F5T28", "F5T32", "F5T52",	"F5T56", "F5T74.5", "F5T152", "F5T248", "F6T28", "F6T32", "F6T56", "F6T52", "F6T74.5", "F6T152", "F6T248",	"F8T28", "F8T32",	"F8T52", "F8T56",	"F8T74.5", "F8T152", "F8T248")
+
+mods_sum <- as.data.frame(mods_sum)
+rownames(mods_sum) <- mods_sum$Module
+#mods_sum.vfa <- as.data.frame(filter(mods_sum.vfa, colnames(mods_sum.vfa) %in% rownames(hplc)))
+
+mods_sum <- as.data.frame(t(mods_sum[,-1]))
+#mods_sum.vfa <- t(as.data.frame(mods_sum.vfa))
+gmm.ps <- merge_phyloseq(otu_table(mods_sum, taxa_are_rows = F), sample_data(ps1))
+
+```
+
+## GMM correlation network   
+
+Using Spearman corelation to identify "co-expressed" metabolic modules.  
+
+```{r GMM-correlation-network, warning=FALSE, message=FALSE, fig.height=10, fig.width=16}
+
+library(qgraph)
+
+cor.gm <- associate(t(abundances(gmm.ps)), t(abundances(gmm.ps)),
+                    method = "spearman", mode = "matrix", 
+                    p.adj.threshold = 0.05, n.signif = 1,
+                    filter.self.correlations =TRUE)
+#mod.nam <- unique(module_df$Names)
+labels_row <- rownames(cor.gm$cor)
+set.seed(12134)
+qab <- qgraph(cor.gm$cor, minimum = 0.6, fade = TRUE, vsize = 1.5, 
+              layout = "spring", vTrans = 255, node.labels= TRUE,
+              edge.labels=FALSE, rotation= "promax", label.scale= F, 
+              labels = labels_row, label.cex = 0.8, 
+              #label.color="#ef8a62",
+              theme= "colorblind",
+              curve=T, color="#ef8a62")#, edge.color= "#00CDCD")
+
+qgraph(qab,filetype='pdf',height=12,width=12)
+
+
+```
+
+**Fig. 16: GMM co-expression in the minimal microbiome.** Red color is negative correlation and blue is positive correlation. The table above can be used to check for names of moduleIDs.   
+This is a complicated ne to visualize. For now will just keep it as it is.  
+
+GMM based community similarity.   
+```{r, gmm-ordination, warning=FALSE, message=FALSE, fig.align='center', fig.height=4, fig.width=10}
+set.seed(4231)
+# proj <- get_ordination(pseq, "MDS", "bray")
+
+ord.gmm <- ordinate(gmm.ps, "NMDS", "canberra")
+
+plot_ordination(gmm.ps, ord.gmm, color = "Fasting", shape ="Acetate_Feed") +                 geom_point(size = 5) + scale_color_brewer(palette = "Dark2") +
+  geom_text_repel(aes(label = Time_hr), size=3, color="black") + 
+  labs(title = "GMM abundance based \ncommunity-level structure") + 
+  facet_wrap(~StudyIdentifier) + theme_syncom() #+ stat_density_2d()
+#+ theme_bw() + 
+
+#ggsave("mtrans_syncom/figures/figure 3 GMM ordination.pdf", height = 4, width = 6)
+```
+
+**Fig. 17a: GMM based community dissimilarity in the minimal microbiome.** The profiles are more clearer at functional level.     
+
+```{r fig.align='center', fig.height=5, fig.width=16}
+x <- gmm.ps
+otu <- abundances(x)
+metadata <- meta(x)
+
+#library(vegan)
+#rda.result <- vegan::rda(t(otu) ~ factor(metadata$Fasting),
+#                         na.action = na.fail, scale = TRUE)
+#plot(rda.result, choices = c(1,2), type = "points", pch = 15, scaling = 3, cex = 0.7)
+#points(rda.result, choices = c(1,2), pch = 15, scaling = 3, cex = 0.7)
+#ordihull(rda.result, metadata$Fasting, scaling = 3, label = TRUE)
+
+set.seed(23234) 
+
+gmm.canb <- phyloseq::distance(gmm.ps, method = "canberra") # CAP ordinate 
+cap_ord <- ordinate(physeq = gmm.ps,  
+                    method = "CAP", 
+                    distance = gmm.canb, 
+                    formula = ~ DisturbanceCarbs_2)
+
+cap_plot <- plot_ordination(physeq = gmm.ps, 
+                            ordination = cap_ord, 
+                            color = "DisturbanceCarbs_2", 
+                            shape = "Acetate_Feed", label = "TimePoint",
+                            axes = c(1,2)) + geom_point(size = 3) 
+# Now add the environmental variables as arrows
+arrowmat <- vegan::scores(cap_ord, display = "bp")
+
+# Add labels, make a data.frame
+arrowdf <- data.frame(labels = rownames(arrowmat), arrowmat)
+
+# Define the arrow aesthetic mapping
+arrow_map <- aes(xend = CAP1, 
+    yend = CAP2, 
+    x = 0, 
+    y = 0, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+label_map <- aes(x = 1.3 * CAP1, 
+    y = 1.3 * CAP2, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+arrowhead = arrow(length = unit(0.01, "npc"))
+
+# Make a new graphic
+cap_plot + 
+  geom_segment(
+    mapping = arrow_map, 
+    size = .5, 
+    data = arrowdf, 
+    color = "gray", 
+    arrow = arrowhead
+  ) + 
+  geom_text(
+    mapping = label_map, 
+    size = 4,  
+    data = arrowdf, 
+    show.legend = FALSE
+  )+ ggtitle("CAP Plot GMM expression profile") + stat_density_2d() + theme_syncom() + scale_color_brewer(palette = "Set2") 
+
+anova(cap_ord)
+
+
+```
+**Fig. 17b: Constrained ordination, GMM based community dissimilarity in the minimal microbiome.** The profiles are more clearer at functional level.     
+
+```{r fig.align='center', fig.height=5, fig.width=16}
+set.seed(23234) 
+ps.fil <- subset_samples(SyncomFiltData, RNASeq == "YES")
+ps.fil <- subset_samples(ps.fil, StudyIdentifier != "Bioreactor C")
+ps.fil <- rarefy_even_depth(ps.fil)
+syncom.canb <- phyloseq::distance(ps.fil, method = "canberra") # CAP ordinate 
+cap_ord <- ordinate(physeq = ps.fil,  
+                    method = "CAP", 
+                    distance = syncom.canb, 
+                    formula = ~ DisturbanceCarbs_2)
+
+cap_plot <- plot_ordination(physeq = ps.fil, 
+                            ordination = cap_ord, 
+                            color = "DisturbanceCarbs_2", 
+                            shape = "Acetate_Feed", label = "TimePoint",
+                            axes = c(1,2)) + geom_point(size = 3) 
+# Now add the environmental variables as arrows
+arrowmat <- vegan::scores(cap_ord, display = "bp")
+
+# Add labels, make a data.frame
+arrowdf <- data.frame(labels = rownames(arrowmat), arrowmat)
+
+# Define the arrow aesthetic mapping
+arrow_map <- aes(xend = CAP1, 
+    yend = CAP2, 
+    x = 0, 
+    y = 0, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+label_map <- aes(x = 1.3 * CAP1, 
+    y = 1.3 * CAP2, 
+    shape = NULL, 
+    color = NULL, 
+    label = labels)
+
+arrowhead = arrow(length = unit(0.01, "npc"))
+
+# Make a new graphic
+cap_plot + 
+  geom_segment(
+    mapping = arrow_map, 
+    size = .5, 
+    data = arrowdf, 
+    color = "gray", 
+    arrow = arrowhead
+  ) + 
+  geom_text(
+    mapping = label_map, 
+    size = 4,  
+    data = arrowdf, 
+    show.legend = FALSE
+  )+ ggtitle("CAP Plot 16S rRNA gene profile") + stat_density_2d() + theme_syncom() + scale_color_brewer(palette = "Set2") 
+
+anova(cap_ord)
+
+```
+**Fig. 17b: Constrained ordination, 16S based community dissimilarity in the minimal microbiome.** The profiles are less clearer at compositional.     
+
+
+## KEGG ordination  
+
+GMM based community similarity suggests clear difference in gene expression, KO values also suggest the same. The deviation in 24hr is likely due to lack of *B. hydrogenotrophica* in other samples as well as the possibility of longer fasting phases as carbohydrates are likely consumed within 12hrs.  
+```{r KEGG-ordination,warning=FALSE, message=FALSE, fig.align='center', fig.height=5, fig.width=16}
+
+data("SynComRNAKEGG")
+kegg <- SynComRNAKEGG
+
+#head(kegg)
+
+kegg_sum <- kegg %>% group_by(KOID) %>% 
+  summarize(sum(F5T24), sum(F5T48), sum(F5T176), sum(F5T240), sum(F5T264), sum(F6T24),sum(F6T48), sum(F6T176), sum(F6T240), sum(F6T264), sum(F8T24), sum(F8T48), sum(F8T176), sum(F8T240), sum(F8T264), sum(F5T28),sum(F5T32), sum(F5T52), sum(F5T56), sum(F5T74A5), sum(F5T152), sum(F5T248), sum(F6T28),sum(F6T32), sum(F6T52),  sum(F6T56), sum(F6T74A5), sum(F6T152), sum(F6T248), sum(F8T28), sum(F8T32), sum(F8T52), sum(F8T56),  sum(F8T74A5), sum(F8T152), sum(F8T248))
+
+#head(kegg_sum)
+colnames(kegg_sum) <- c("KOID","F5T24", "F5T48", "F5T176", "F5T240", "F5T264", "F6T24", "F6T48",	  "F6T176", "F6T240",	"F6T264", "F8T24", "F8T48", "F8T176", "F8T240", "F8T264", "F5T28", "F5T32", "F5T52",	"F5T56", "F5T74.5", "F5T152", "F5T248", "F6T28", "F6T32", "F6T56", "F6T52", "F6T74.5", "F6T152", "F6T248",	"F8T28", "F8T32",	"F8T52", "F8T56",	"F8T74.5", "F8T152", "F8T248")
+
+kegg_sum <- as.data.frame(kegg_sum)
+rownames(kegg_sum) <- kegg_sum$KOID
+#mods_sum.vfa <- as.data.frame(filter(mods_sum.vfa, colnames(mods_sum.vfa) %in% rownames(hplc)))
+
+kegg_sum_1 <- kegg_sum[,-1]
+#mods_sum.vfa <- t(as.data.frame(mods_sum.vfa))
+
+# Make KEGG heirarchy  
+# K00334 K18330 K18331 K18332
+#head(kegg)
+## Counts per million normalization
+kegg.cmp <- edgeR::cpm(kegg_sum_1)
+
+#write.csv(kegg_sum_1, "mtrans_syncom/data/kegg_cmp.csv")
+#write.csv(kegg, "mtrans_syncom/data/kegg_raw_counts_all.csv")
+
+#head(kegg.cmp)
+keg.class <- kegg[,c("KOID", "Level_3", "KOGeneName")]
+
+ps1 <- SyncomFiltData
+
+kegg.ps <- merge_phyloseq(otu_table(kegg.cmp, taxa_are_rows = T), sample_data(ps1))
+
+set.seed(42134231)
+# proj <- get_ordination(pseq, "MDS", "bray")
+ord.kegg <- ordinate(kegg.ps, "NMDS", "canberra")
+
+plot_ordination(kegg.ps, ord.kegg, color = "Fasting", shape ="Acetate_Feed") +
+  geom_point(size = 5) + scale_color_brewer(palette = "Dark2") +
+  geom_text_repel(aes(label = Time_hr), size=3, color="black") + labs(title = "KEGG KO abundance based community-level structure")  + facet_wrap(~StudyIdentifier) + theme_syncom()
+#+ theme_bw() + + facet_wrap(~StudyIdentifier)
+
+#ggsave("mtrans_syncom/figures/figure 4 KO ordination.pdf", height = 4, width = 10)
+
+```
+
+**Fig. 18: KEGG KO-orthologue based community dissimilarity in the minimal microbiome.** The profiles are more clearer at KO level.     
+
+
+## Polysaccharide degradation  
+
+Xylan, Pectin, Inulin and Starch as diet origin polysaccharides.  
+
+```{r Polysaccharide-degradation, warning=FALSE,fig.height = 6, fig.width = 16}
+
+module.fiber <- subset(gmm, Module == "pectin degradation I" | Module == "pectin degradation II"| Module == "fructan degradation (Curated)"| Module == "arabinoxylan degradation" | Module =="starch degradation" | Module == "mucin degradation")
+#module.fiber[module.fiber == 0]<- NA
+str(module.fiber)
+
+
+p.fiber <- ggline(module.fiber, "TimePoint", "value", 
+                  color = "Taxon", 
+                  facet.by = "Module",
+                  add="mean_sd",
+                  palette = strain.colors, 
+                  scales="free",
+                  ylab = "Media Module Abundance", legend = "bottom")
+p.fiber <- p.fiber + theme_syncom() + theme(legend.position="bottom")
+p.fiber
+#ggsave("mtrans_syncom/figures/figure 1 DOP.pdf", height = 5, width = 18)
+
+
+```
+
+
+## Fermentation degradation  
+
+Focusing specifically on acetate, butyrate, propionate, formate, lactate, 1,2-Propanediol
+
+```{r Fermentation-degradation, warning=FALSE,fig.height = 12, fig.width = 16}
+
+#| Module == "formate conversion" 
+#count.module.df2
+
+gmm.list.scfa <- c("propionate production IV (1,2-PD)","propionate production I",
+                   "propionate production II", "propionate production III",
+                   "acetyl-CoA to acetate","lactate production",
+                   "lactate consumption II","acetyl-CoA to crotonyl-CoA",
+                   "lactate consumption III (lctABCDEF, Curated)",
+                   "pyruvate:formate lyase", "succinate consumption",
+                   "succinate conversion to propionate",
+                   "Acetate synthesis IV", "Acetate synthesis II", "formate conversion"             ,"lactaldehyde degradation", "anaerobic fatty acid beta-oxidation",
+                   "Bifidobacterium shunt")
+
+
+
+module.vfa <- filter(gmm, Module %in% gmm.list.scfa)
+
+p.vfa <- ggline(module.vfa, "TimePoint", "value", 
+                color = "Taxon", 
+                facet.by = "Module",
+                add="mean_sd",
+                palette = strain.colors, 
+                scales="free",
+                ylab = "Media Module Abundance", 
+                legend = "bottom",  nrow = NULL, ncol = 2)
+p.vfa <- p.vfa + theme_syncom() + theme(legend.position="bottom",
+                                        strip.text = element_text(size = 12))
+p.vfa
+#ggsave("mtrans_syncom/figures/figure 2 vfa.pdf", height = 12, width = 16)
+
+
+```
+
+## Simple saccharides utilization  
+
+```{r saccharides-utilization, warning=FALSE, fig.height = 14, fig.width = 16}
+
+list.carbs <- c("xylose degradation", "galacturonate degradation I", "galacturonate degradation II", "lactose degradation", "maltose degradation", "arabinose degradation",	"fructose degradation",	"galactose degradation", "mannose degradation",	"rhamnose degradation", "fucose degradation", "ribose degradation", "sucrose degradation I", "sucrose degradation II", "methanol conversion", "glyoxylate bypass")
+
+module.carbs <- subset(gmm, Module %in% list.carbs)
+module.carbs[module.carbs ==0]<- NA
+
+#strain.colors
+
+p.carbs <- ggline(module.carbs, "TimePoint", "value", 
+                  color = "Taxon", 
+                  facet.by = "Module",
+                  add="mean_sd",
+                  palette = strain.colors, 
+                  scales="free",
+                  ylab = "Media Module Abundance", 
+                  legend = "bottom",  nrow = NULL, ncol = 2)
+p.carbs <- p.carbs + theme_syncom() + theme(legend.position="bottom",
+                                            strip.text = element_text(size = 12))
+p.carbs
+
+#ggsave("mtrans_syncom/figures/figure 3 sugars.pdf", height = 14, width = 16)
+
+
+```
+
+
+## Amino acid degradation   
+
+```{r amino-acid-degradation, warning=FALSE, fig.height = 20, fig.width = 16}
+
+gmm <- SyncomGMM
+gmm$Taxon <- gsub("Lachnospiraceae_bacterium", "Flavonifractor_plautiia", gmm$Taxon)
+
+
+aa_list <- c("alanine degradation I",
+             "alanine degradation II",
+             "arginine degradation I",
+             "arginine degradation IV",
+             "arginine degradation V",
+             "aspartate degradation I",
+             "aspartate degradation II",
+             "cysteine degradation I",
+             "cysteine degradation II",
+             "glutamate degradation II",
+             "glutamine degradation I",
+             "glutamine degradation II",
+             "glycine degradation",
+             "histidine degradation",
+             "isoleucine degradation",
+             "leucine degradation",
+             "lysine degradation I",
+             "methionine degradation I",
+             "serine degradation",
+             "threonine degradation I",
+             "threonine degradation II",
+             "tryptophan degradation",
+             "tyrosine degradation I")
+
+module.aa <- subset(gmm, Module %in% aa_list)
+module.aa[module.aa ==0]<- NA
+p.aa <- ggline(module.aa, "TimePoint", "value", 
+               color = "Taxon", 
+               facet.by = "Module",
+               add="mean_sd",
+               palette = strain.colors, 
+               scales="free",
+               ylab = "Media Module Abundance", 
+               legend = "bottom",  nrow = NULL, ncol = 2)
+p.aa <- p.aa + theme_syncom() + theme(legend.position="bottom",
+                                      strip.text = element_text(size = 12))
+p.aa
+
+#ggsave("mtrans_syncom/figures/figure 4a aa degradation.pdf", height = 20, width = 16)
+
+
+```
+
+
+## Amino acids biosynthesis  
+
+```{r amino-acid-biosynthesis, warning=FALSE, fig.height = 20, fig.width = 16}
+count.module.aab <- filter(gmm, grepl("biosynthesis",Module))
+#head(count.module.aab)
+count.module.aab[count.module.aab ==0]<- NA
+
+module.aab.plot <- ggline(count.module.aab, "TimePoint", "value", 
+                          color = "Taxon", 
+                          facet.by = "Module",
+                          add="mean_sd",
+                          palette = strain.colors, 
+                          scales="free",
+                          ylab = "Media Module Abundance", 
+                          legend = "bottom",  nrow = NULL, ncol = 2)
+module.aab.plot <- module.aab.plot + theme_syncom() + theme(legend.position="bottom",
+                                                            strip.text = element_text(size = 12))
+module.aab.plot
+#ggsave("mtrans_syncom/figures/figure 4b aa biosynth plot.pdf", 
+       #height = 15, width = 23,
+       #useDingbats = FALSE)
+
+```
+
+## Compare fasting feeding  
+Fasting = 24.0, 48.0
+Feeding = 28.0, 32.0
+
+```{r }
+#head(SynComRNAKEGG)
+complete_table.brite <- SynComRNAKEGG %>% distinct(LocusTag, .keep_all = TRUE)
+count.aggregate.kegg <- complete_table.brite %>% group_by(GeneName) %>% 
+  summarise(sum(F5T24), sum(F6T24), sum(F8T24), sum(F5T28), sum(F6T28), sum(F8T28), sum(F5T32), sum(F6T32), sum(F8T32), sum(F5T48), sum(F6T48), sum(F8T48), sum(F5T52), sum(F6T52), sum(F8T52), sum(F5T56), sum(F6T56), sum(F8T56), sum(F5T74A5), sum(F6T74A5), sum(F8T74A5), sum(F5T152), sum(F6T152), sum(F8T152), sum(F5T176), sum(F6T176), sum(F8T176), sum(F5T240), sum(F6T240), sum(F8T240), sum(F5T248), sum(F6T248), sum(F8T248), sum(F5T264), sum(F6T264), sum(F8T264))
+
+#colSums(count.aggregate.kegg)
+
+#head(count.aggregate.kegg)
+
+colnames(count.aggregate.kegg) <- c("KOID","F5T24","F6T24","F8T24","F5T28","F6T28","F8T28", "F5T32", "F6T32", "F8T32", "F5T48", "F6T48", "F8T48", "F5T52", "F6T52", "F8T52", "F5T56", "F6T56", "F8T56", "F5T74A5", "F6T74A5",  "F8T74A5", "F5T152",  "F6T152", "F8T152", "F5T176", "F6T176", "F8T176", "F5T240", "F6T240",  "F8T240", "F5T248", "F6T248", "F8T248", "F5T264", "F6T264", "F8T264")
+
+count.aggregate.kegg <- count.aggregate.kegg[, c("KOID", "F5T24", "F6T24", "F8T24", "F5T48", "F6T48", "F8T48","F5T28", "F6T28", "F8T28", "F5T32", "F6T32", "F8T32")]
+
+count.aggregate.kegg <- as.data.frame(count.aggregate.kegg)
+rownames(count.aggregate.kegg) <- count.aggregate.kegg$KOID
+count.aggregate.kegg <- count.aggregate.kegg[,-1]
+#head(count.aggregate.kegg)
+#DT::datatable(count.aggregate.kegg)
+
+coldata.df <- data.frame(SampleID = c("F5T24", "F6T24", "F8T24", "F5T48", "F6T48", "F8T48","F5T28", "F6T28", "F8T28", "F5T32", "F6T32", "F8T32"), condition = c("Fasting",	"Fasting","Fasting","Fasting",	"Fasting",	"Fasting","Feeding",	"Feeding","Feeding",	"Feeding","Feeding",	"Feeding"))
+#coldata.df
+#write.table(coldata.df, "tables/coldata_df.txt", sep = "\t")
+dds <- DESeqDataSetFromMatrix(countData = count.aggregate.kegg,
+                              colData = coldata.df,
+                              design = ~ condition)
+#dds
+
+keep <- rowSums(counts(dds)) >= 10
+dds <- dds[keep,]
+
+dds <- DESeq(dds,fitType= "local")
+
+res <- results(dds)
+ko_results <- data.frame(res)
+sorted_ko_results <- ko_results[order(-ko_results$baseMean),]
+#colnames(sorted_ko_results)[1] <- "LocusTag"
+#head(sorted_ko_results)
+EnhancedVolcano::EnhancedVolcano(sorted_ko_results,
+                                 lab = rownames(res),
+                                 x = 'log2FoldChange',
+                                 y = 'padj',
+                                 FCcutoff = 1.5,
+                                 legendPosition = "right")
+
+
+```
+
+
+**Table with KO values significantly different between fasting versus feeding.**  
+```{r}
+sorted_ko_results.fil <- subset(sorted_ko_results, padj <= 0.05)
+DT::datatable(sorted_ko_results.fil)
+```
+
+Example: Pectinesterase A is 2.9 log2- fold higher in feeding, Sialidase is -1.4 log2- fold lower.
+
+```{r}
+sessionInfo()
+```
+
+Ref of interest: [Biodiversity stability](nature.com/scitable/knowledge/library/biodiversity-and-ecosystem-stability-17059965/)

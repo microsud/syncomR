@@ -1,0 +1,143 @@
+MF0001	arabinoxylan degradation	Other
+MF0002	fructan degradation (Curated)	Other
+MF0003	pectin degradation I	Other
+MF0004	pectin degradation II	Other
+MF0005	starch degradation	Other
+MF0006	lactose degradation	Other
+MF0007	lactose and galactose degradation	Other
+MF0008	maltose degradation	Other
+MF0009	melibiose degradation	Other
+MF0010	sucrose degradation I	Other
+MF0011	sucrose degradation II	Other
+MF0012	trehalose degradation	Other
+MF0013	allose degradation	Other
+MF0014	arabinose degradation	Other
+MF0015	fructose degradation	Other
+MF0016	fucose degradation	Other
+MF0017	galactose degradation	Other
+MF0018	mannose degradation	Other
+MF0019	rhamnose degradation	Other
+MF0020	ribose degradation	Other
+MF0021	xylose degradation	Other
+MF0022	galacturonate degradation I	Other
+MF0023	galacturonate degradation II	Other
+MF0024	phenylalanine degradation	AA degradation
+MF0025	tryptophan degradation	AA degradation
+MF0026	tyrosine degradation I	AA degradation
+MF0027	tyrosine degradation II	AA degradation
+MF0028	aspartate degradation I	AA degradation
+MF0029	aspartate degradation II	AA degradation
+MF0030	glutamate degradation I	AA degradation
+MF0031	glutamate degradation II	AA degradation
+MF0032	glutamate degradation III	AA degradation
+MF0033	alanine degradation I	AA degradation
+MF0034	alanine degradation II	AA degradation
+MF0035	glycine degradation	AA degradation
+MF0036	isoleucine degradation	AA degradation
+MF0037	leucine degradation	AA degradation
+MF0038	methionine degradation I	AA degradation
+MF0039	methionine degradation II	AA degradation
+MF0040	proline degradation	AA degradation
+MF0041	valine degradation I	AA degradation
+MF0042	asparagine degradation	AA degradation
+MF0043	cysteine biosynthesis/homocysteine degradation	AA degradation
+MF0044	cysteine degradation I	AA degradation
+MF0045	cysteine degradation II	AA degradation
+MF0046	glutamine degradation I	AA degradation
+MF0047	glutamine degradation II	AA degradation
+MF0048	serine degradation	AA degradation
+MF0049	threonine degradation I	AA degradation
+MF0050	threonine degradation II	AA degradation
+MF0051	arginine degradation I	AA degradation
+MF0052	arginine degradation II	AA degradation
+MF0053	arginine degradation III	AA degradation
+MF0054	arginine degradation IV	AA degradation
+MF0055	arginine degradation V	AA degradation
+MF0056	histidine degradation	AA degradation
+MF0057	lysine degradation I	AA degradation
+MF0058	lysine degradation II	AA degradation
+MF0059	anaerobic fatty acid beta-oxidation	Other
+MF0060	glycerol degradation I	Other
+MF0061	glycerol degradation II	Other
+MF0062	glycerol degradation III	Other
+MF0063	glyoxylate bypass	Other
+MF0064	triacylglycerol degradation	Other
+MF0065	Bifidobacterium shunt	Other
+MF0066	Entner-Doudoroff pathway	Other
+MF0067	glycolysis (preparatory phase)	Other
+MF0068	glycolysis (pay-off phase)	Other
+MF0069	NADH:ferredoxin oxidoreductase	Other
+MF0070	pentose phosphate pathway (oxidative phase)	Other
+MF0071	pentose phosphate pathway (non-oxidative branch)	Other
+MF0072	pyruvate dehydrogenase complex	Other
+MF0073	pyruvate:ferredoxin oxidoreductase	Other
+MF0074	pyruvate:formate lyase	Other
+MF0075	acetate to acetyl-CoA	Other
+MF0076	4-aminobutyrate degradation	Other
+MF0077	formate conversion	Other
+MF0078	lactaldehyde degradation	Other
+MF0079	lactate consumption I	Other
+MF0080	lactate consumption II	Other
+MF0081	methanol conversion	Other
+MF0082	putrescine degradation	Other
+MF0083	succinate consumption	Other
+MF0084	succinate conversion to propionate	Other
+MF0085	urea degradation	Other
+MF0086	acetyl-CoA to acetate	Other
+MF0087	acetyl-CoA to crotonyl-CoA	Other
+MF0088	butyrate production I	Other
+MF0089	butyrate production II	Other
+MF0090	ethanol production I	Other
+MF0091	ethanol production II	Other
+MF0092	lactate production	Other
+MF0093	propionate production I	Other
+MF0094	propionate production II	Other
+MF0095	propionate production III	Other
+MF0096	succinate production	Other
+MF0097	homoacetogenesis	Other
+MF0098	hydrogen metabolism	Other
+MF0099	methanogenesis - methyl-coM	Other
+MF0100	methanogenesis from carbon dioxide	Other
+MF0101	nitrate reduction (dissimilatory)	Other
+MF0102	sulfate reduction (dissimilatory)	Other
+MF0103	mucin degradation	Other
+MF0104	"lactate consumption III (lctABCDEF, Curated)"	Other
+MF0105	cellobiose degradation I (curated)	Other
+MF0106	"1,2 propanediol production I (lactaldehyde, curated)"	Other
+MF0107	"1,2 propanediol production II (Hydroxyacetone, curated)"	Other
+MF0108	"propionate production IV (1,2-PD)"	Other
+MF00020	"serine biosynthesis, glycerate-3P => serine"	AA biosynthesis
+MF00018	"threonine biosynthesis, aspartate => homoserine => threonine"	AA biosynthesis
+MF00033	"ectoine biosynthesis, aspartate => ectoine"	AA biosynthesis
+MF00021	"cysteine biosynthesis, serine => cysteine"	AA biosynthesis
+MF00338	"cysteine biosynthesis, homocysteine + serine => cysteine"	AA biosynthesis
+MF00609	"cysteine biosynthesis, methionine => cysteine"	AA biosynthesis
+MF00017	"methionine biosynthesis, apartate => homoserine => methionine"	AA biosynthesis
+MF00019	"valine/isoleucine biosynthesis, pyruvate => valine / 2-oxobutanoate => isoleucine"	AA biosynthesis
+MF00535	"isoleucine biosynthesis, pyruvate => 2-oxobutanoate"	AA biosynthesis
+MF00570	"isoleucine biosynthesis, threonine => 2-oxobutanoate => isoleucine"	AA biosynthesis
+MF00432	"leucine biosynthesis, 2-oxoisovalerate => 2-oxoisocaproate"	AA biosynthesis
+MF00016	"lysine biosynthesis, succinyl-DAP pathway, aspartate => lysine"	AA biosynthesis
+"MF00525 lysine biosynthesis, acetyl-DAP pathway, aspartate => lysine"	AA biosynthesis	Other
+MF00526	"lysine biosynthesis, DAP dehydrogenase pathway, aspartate => lysine"	AA biosynthesis
+MF00527	"lysine biosynthesis, DAP aminotransferase pathway, aspartate => lysine"	AA biosynthesis
+MF00030	"lysine biosynthesis, AAA pathway, 2-oxoglutarate => 2-aminoadipate => lysine"	AA biosynthesis
+MF00433	"lysine biosynthesis, 2-oxoglutarate => 2-oxoadipate"	AA biosynthesis
+MF00031	"lysine biosynthesis, mediated by LysW, 2-aminoadipate => lysine"	AA biosynthesis
+MF00028	"ornithine biosynthesis, glutamate => ornithine"	AA biosynthesis
+MF00763	"ornithine biosynthesis, mediated by LysW, glutamate => ornithine"	AA biosynthesis
+MF00844	"arginine biosynthesis, ornithine => arginine"	AA biosynthesis
+MF00845	"arginine biosynthesis, glutamate => acetylcitrulline => arginine"	AA biosynthesis
+MF00029	urea cycle	AA biosynthesis
+MF00015	"proline biosynthesis, glutamate => proline"	AA biosynthesis
+MF00026	"histidine biosynthesis, PRPP => histidine"	AA biosynthesis
+MF00022	"shikimate pathway, phosphoenolpyruvate + erythrose-4P => chorismate"	AA biosynthesis
+MF00023	"tryptophan biosynthesis, chorismate => tryptophan"	AA biosynthesis
+MF00024	"phenylalanine biosynthesis, chorismate => phenylalanine"	AA biosynthesis
+MF00025	"tyrosine biosynthesis, chorismate => tyrosine"	AA biosynthesis
+MF00040	"tyrosine biosynthesis, prephanate => pretyrosine => tyrosine"	AA biosynthesis
+MGB006	glutamate biosynthesis I	AA biosynthesis
+MGB007	glutamate biosynthesis II	AA biosynthesis
+MGB044	Acetate synthesis II	Other
+MGB045	Acetate synthesis III	Other
+MGB046	Acetate synthesis IV	Other

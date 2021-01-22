@@ -1,52 +1,104 @@
-#' @title Short-term changes in abundance of taxa from temporal abundance data
+#' @title Short term Changes in Abundance
 #'
-#' @description Calculates short-term changes in abundance of taxa using temporal abundnace data.
+#' @description Calculates short term changes in abundance of taxa
+#'              using temporal Abundance data.
 #'
-#' @details This approach is used by Nathan I. Wisnoski and collegues
-#' \link{https://github.com/nwisnoski/ul-seedbank}. Their approach is based on the following calculation
-#' log(present abundance/past abundance). Also a compositional version using relative abundance similar to
-#' Brian W. Ji, Ravi U. Sheth et al., 2020 \link{https://www.nature.com/articles/s41564-020-0685-1} can be used.
-#' This approach is useful for identifying short term growth behaviours of taxa.
-#' @param ps a non-rarefied raw otu/ASV/species abundance table (longitudinal data).
-#' @param rarefy TRUE  Kept this option incase users have absolute quantification.
-#' @param depth min(sample_sums(ps) If rarefy=TRUE then depth for rarefaction.
-#' @param plot.type If data to be ploted either line or polar else NULL.
+#' @details This approach is used by Wisnoski NI and colleagues
+#'          \url{https://github.com/nwisnoski/ul-seedbank}. Their approach is based on
+#'          the following calculation log(present abundance/past abundance).
+#'          Also a compositional version using relative abundance similar to
+#'          Brian WJi, Sheth R et al
+#'          \url{https://www.nature.com/articles/s41564-020-0685-1} can be used.
+#'          This approach is useful for identifying short term growth behaviors of taxa.
+#'
+#' @param ps a non rarefied raw OTU or ASV or species abundance table longitudinal data.
+#'
+#' @param rarefy TRUE  Kept this option in case users have absolute quantification.
+#'
+#' @param depth If rarefy is TRUE then depth for rarefaction.
+#'
+#' @param compositional Logical TRUE or FALSE.
+#'
+#' @param plot.type If data to be plotted either line or polar else NULL.
+#'
 #' @param abbreviation For plotting whether to abbreviate names of taxa TRUE or FALSE.
-#' @return A data frame with mean growth, max growth or a plot with labelling for max "change in abundance" timepoints.
+#'
+#' @return A data frame with mean growth, max growth or a plot with labeling
+#'         for max \emph{change in abundance} timepoints.
+#'
 #' @references
+#'
 #' \itemize{
-#' \item{}{Shetty SA. et al. A Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes (2020)}
+#' \item{}{Shetty SA. et al. A Minimalist Approach for Deciphering the
+#'         Ecophysiology of Human Gut Microbes 2020}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #' @examples
+#'\dontrun{
 #' data(SyncomFiltData)
-#' ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
-#' p.g <- short_term_change(ps1.b5, rarefy = TRUE, depth = min(sample_sums(ps1.b5)), plot.type = "polar")
-#' p.g <- p.g + scale_color_manual(values = syncom_colors2("BacterialSpecies")) + ggtitle("Bioreactor A")
+#' short_time_labels <- c("74.5h", "173h", "438h", "434h", "390h")
+#' syncom_ps <- subset_samples(SyncomFiltData, !(Time_label %in% short_time_labels))
+#' bioA <- subset_samples(syncom_ps, StudyIdentifier == "Bioreactor A")
+#' bioA.lg <- add_time_lag(bioA)
+#' bioA.lg <- subset_samples(bioA.lg, time_lag >= 4)
+#' p.bioA <- short_term_change(bioA.lg,
+#'   rarefy = TRUE,
+#'   depth = min(sample_sums(bioA.lg)),
+#'   plot.type = "polar"
+#' )
+#' p.g <- p.bioA +
+#'   scale_color_manual(values = syncom_colors2("BacterialSpecies")) +
+#'   ggtitle("Bioreactor A")
 #' print(p.g)
+#' }
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
-#' @import tidyr
-#' @import ggrepel
-#' @import tibble
+#'
+#' @import tidyr dplyr
+#'
+#' @importFrom ggrepel geom_label_repel geom_text_repel
+#'
 #' @export
-#' @keywords Anlaysis and visualization
+#' @keywords Analysis and visualization
 
 short_term_change <- function(ps,
-                              rarefy = TRUE,
-                              depth = min(sample_sums(ps)),
+                              rarefy = FALSE,
+                              compositional = FALSE,
+                              depth = NULL,
                               plot.type = NULL,
                               abbreviation = T) {
-  message("Calculating short term growth behaviours of taxa")
+  # message("Calculating short term growth behaviours of taxa")
+
+  if (is.null(depth) || depth > min(phyloseq::sample_sums(ps))) {
+    stop("Depth cannot be NULL or more than
+         minimun number of reads in your data")
+  }
+
+  time <- variable <- value <- time_lag <- growth_diff <- NULL
+  max.growth <- OTU <- ismax <- otu.time <- NULL
 
   ps.1 <- otu.tb <- grs.all <- grts <- otu.rar <- maxgrs <- p <- NULL
 
-  if (rarefy == TRUE) {
-    ps.1 <- rarefy_even_depth(ps, sample.size = depth)
-  } else {
+  if (rarefy == TRUE & compositional == FALSE) {
+    message("rarefy is set to TRUE, calculating short term change using counts")
+    ps.1 <- phyloseq::rarefy_even_depth(ps, sample.size = depth)
+  } else if (rarefy == FALSE & compositional == FALSE) {
+    message("rarefy is set to FALSE, compositional==FALSE
+            calculating short term change using raw counts as provided by user")
+    ps.1 <- ps
+  } else if (rarefy == FALSE & compositional == TRUE) {
+    message("rarefy is set to FALSE, compositional==TRUE,
+            using relative abundances")
     ps.1 <- microbiome::transform(ps, "compositional")
+  } else if (rarefy == TRUE & compositional == TRUE) {
+    stop(message("Both rRarefy and compositional cannot be TRUE"))
   }
 
-  otu.tb <- (taxa_time_table(ps.1, normalize = F, time.col = "Time_hr", remove.zero = F) + .1)
+  otu.tb <- (taxa_time_table(ps.1,
+    normalize = F,
+    time.col = "Time_hr",
+    remove.zero = F
+  ) + .1)
+
   otu.tb$time <- rownames(otu.tb)
 
   otu.tb.ldf <- reshape2::melt(otu.tb)
@@ -60,39 +112,33 @@ short_term_change <- function(ps,
     mutate(
       time_lag = time - lag(time), # time lag since sampling is not always equal
       growth_diff = log(value / lag(value)),
+      growth_rate = log(value - lag(value) / lag(value)),
+      var_abund = value - lag(value) / time_lag
       # growth_diff = log(value - lag(value)/lag(value)), # log(present abund-past abund/past abund)
       # growth = log(value - lag(value)/Diff_timepoint)+.1,
-      growth_rate = (growth_diff / time_lag) / lag(value),
       # Mortality = log(lead(value) - value/Diff_timepoint)+.1
     )
+
   grwt$sample.name <- grwt$time
   # colnames(grwt)["variable"]
   colnames(grwt)[colnames(grwt) == "variable"] <- "OTU"
 
+  maxgrs <- grwt %>%
+    summarize(max.growth = max(growth_diff, na.rm = T))
+  colnames(maxgrs)[colnames(maxgrs) == "variable"] <- "OTU"
   grs.all <- grwt %>%
-    # gather(-"sample.name", key = "OTU", value = "growth_rate") %>%
-    # mutate(Time = sample.name) %>%
-    group_by(OTU, time) %>%
-    # replace_na(growth_diff, "NaN") %>%
-    summarize(
-      mean.growth = mean(growth_diff),
-      sd.growth = sd(growth_diff)
-    )
-  # head(grs.all)
-
-  maxgrs <- grs.all %>%
-    summarize(max.growth = max(mean.growth, na.rm = T))
-  grs.all <- grs.all %>%
     left_join(maxgrs)
   grs.all <- grs.all %>%
-    mutate(ismax = ifelse(mean.growth == max.growth, T, F))
+    mutate(ismax = ifelse(growth_diff == max.growth, T, F))
   # DT::datatable(grs.all)
   grs.all$OTU <- gsub("_", " ", grs.all$OTU)
+
   if (abbreviation) {
     grs.all$OTUabb <- toupper(abbreviate(grs.all$OTU,
       minlength = 3,
       method = "both.sides"
     ))
+
     grs.all$otu.time <- paste0(grs.all$OTUabb, " ", grs.all$time, "h")
   } else {
     grs.all$otu.time <- paste0(grs.all$OTU, " ", grs.all$time, "h")
@@ -105,14 +151,14 @@ short_term_change <- function(ps,
     return(grs.all)
   } else if (plot.type == "line") {
     p <- ggplot(grs.all, aes(x = time, group = OTU, col = OTU)) +
-      geom_line(aes(y = mean.growth), alpha = 0.6, size = 1) +
+      geom_line(aes(y = growth_diff), alpha = 0.6, size = 1) +
       geom_point(
         data = subset(grs.all, ismax == T),
         aes(y = max.growth), alpha = 0.8, size = 3
       ) +
       # coord_flip() +
-      geom_ribbon(aes(group = NULL, col = NULL, ymax = 0, ymin = min(grs.all$mean.growth)),
-        fill = "#edf3f5", col = "white", alpha = 0.5
+      geom_ribbon(aes(group = NULL, col = NULL, ymax = 0, ymin = min(grs.all$growth_diff)),
+        fill = "white", col = "#edf3f5", alpha = 0.7
       ) +
       theme(
         legend.position = "top", legend.text = element_text(size = 9),
@@ -131,7 +177,7 @@ short_term_change <- function(ps,
       geom_hline(yintercept = 0) +
       labs(
         x = "Time (hr)",
-        y = expression(paste("Change in abundance ", " µ= ", abund[t + 1] / abund[t]))
+        y = expression(paste("Change in abundance ", " \U00B5 = ", abund[t + 1] / abund[t]))
       )
     #+ scale_color_manual(values = strain.colors)
     #  y = expression(Mean~growth~rate~(hr^-1))
@@ -139,13 +185,13 @@ short_term_change <- function(ps,
     return(p + scale_x_continuous(expand = c(0, 0)))
   } else if (plot.type == "polar") {
     p <- ggplot(grs.all, aes(x = time, group = OTU, col = OTU)) +
-      geom_line(aes(y = mean.growth), alpha = 0.6, size = 1) +
+      geom_line(aes(y = growth_diff), alpha = 0.6, size = 1) +
       geom_point(
         data = subset(grs.all, ismax == T),
         aes(y = max.growth), alpha = 0.8, size = 3
       ) +
       geom_ribbon(aes(group = NULL, col = NULL, ymax = 0, ymin = -9),
-        fill = "#edf3f5", col = "white", alpha = 0.5
+        fill = "#edf3f5", col = "#edf3f5", alpha = 0.5
       ) +
       coord_polar(theta = "x") +
       theme(
@@ -171,7 +217,7 @@ short_term_change <- function(ps,
       geom_hline(yintercept = 0) +
       labs(
         x = "Time (hr)",
-        y = expression(paste("Change in abundance ", " µ= ", abund[t + 1] / abund[t]))
+        y = expression(paste("Change in abundance ", " \U00B5 = ", abund[t + 1] / abund[t]))
       )
     #+ scale_color_manual(values = strain.colors)
     #  y = expression(Mean~growth~rate~(hr^-1))

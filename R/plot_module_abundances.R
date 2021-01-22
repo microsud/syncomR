@@ -1,39 +1,55 @@
-#' @title Plot temporal changes in module abundances
+#' @title Plot Temporal Changes in Module Abundances
 #'
-#' @description Temporal abundances of module.
-#'
-#' @details Temporal taxa abundances are plotted for visual exploration
+#' @description Temporal taxa abundances are plotted for visual exploration.
 #'
 #' @param x A data.frame with Taxon, Module, Timepoint, Counts labels as value column
+#'
 #' @param tax.variable Taxa to plot
+#'
 #' @param mm.variable Module to plot
+#'
 #' @param color.pal List of hex color codes
+#'
 #' @param nrow When multiple values for modules and taxa
+#'
 #' @param ncol When multiple values for modules and taxa
+#'
 #' @references
 #' \itemize{
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #' @examples
-#' data(SyncomGMM)
-#' focal.species <- c("Akkermansia_muciniphila", "Bacteroides_xylanisolvens", "Bacteroides_ovatus")
-#' p <- plot_module_abundances(SyncomGMM,
-#'   tax.variable = focal.species,
-#'   mm.variable = c("propionate production III", "mucin degradation"),
-#'   color.pal = strain.colors,
-#'   nrow = 3,
-#'   ncol = 1
-#' )
-#' p + theme_syncom() + theme(legend.position = "bottom")
+#' # data(SyncomGMM)
+#' # focal.species <- c("Akkermansia_muciniphila",
+#' #                    "Bacteroides_xylanisolvens",
+#' #                    "Bacteroides_ovatus")
+#'
+#' # p <- plot_module_abundances(SyncomGMM,
+#' #  tax.variable = focal.species,
+#' # mm.variable = c("propionate production III", "mucin degradation"),
+#' # color.pal = strain.colors,
+#' # nrow = 3,
+#' # ncol = 1
+#' # )
+#' # p + theme_syncom() + theme(legend.position = "bottom")
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
+#'
 #' @importFrom phyloseq psmelt
+#'
 #' @importFrom ggplot2 geom_line
+#'
 #' @importFrom ggplot2 geom_smooth
-#' @importFrom  scales pretty_breaks
-#' @importFrom  ggplot2 labs
+#'
+#' @importFrom scales pretty_breaks
+#'
+#' @importFrom ggplot2 labs
+#'
+#' @importFrom stats sd
+#'
 #' @export
-#' @keywords Anlaysis and visualization
+#'
+#' @keywords Analysis and visualization
 #'
 
 
@@ -43,6 +59,8 @@ plot_module_abundances <- function(x,
                                    color.pal = NULL,
                                    nrow,
                                    ncol) {
+  mod_mean <- value <- Taxon <- Module <- TimePoint <- mod_mean <- mod_ci <- NULL
+
   df <- filter(x, Taxon %in% tax.variable & Module %in% mm.variable)
 
   if (length(tax.variable) == 1 && length(mm.variable) == 1) {

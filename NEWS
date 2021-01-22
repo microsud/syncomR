@@ -1,12 +1,34 @@
+
+CHANGES IN VERSION syncomR 0.2.1 (2021-01-22)
+
+  o Major fixes for codes
+  o Package build errors and warnings tested
+
+CHANGES IN VERSION syncomR 0.1.6 (2020-07-10)
+
+  o new 16S data with qPCR-copynumber correction
+  o short_term_change fixed to add rarefy and compositional option
+
+CHANGES IN VERSION syncomR 0.1.4 (2020-06-10)
+
+  o fix bug in pkg theme_syncom()
+  o added message for short_term_change
+  o color palette changed to sober syncom_colors2()
+
+CHANGES IN VERSION syncomR 0.1.3 (2020-04-04)
+
+  o fix bug error formula in short_term_change
+
 CHANGES IN VERSION syncomR 0.1.2 (2020-04-17)
 
-  o short_term_change added with labelling taxa with timepoint and remove theme_bw()
+  o short_term_change added with labelling taxa plus timepoint and removed theme_bw()
+  o niche_overlap function added, it works with quantitative traits
   o taxa_time_table now recoded to make use of tidyr::pivot_wider instead of data.table::dcast
-  o find_taxa function added
+  o find_taxa function added to find most dominant taxa in each sample
 
 CHANGES IN VERSION syncomR 0.1.1 (2020-01-30)
 
-  o copies normalize function from seqtime to avoid issues with igraph installation dependency
+  o copied normalize function from seqtime to avoid issues with igraph installation dependency
 
 CHANGES IN VERSION syncomR 0.1.0 (2020-01-29)
 

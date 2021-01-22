@@ -1,0 +1,17 @@
+ID	Genus	Species	Strain	Genus_species	copy_number
+1	Bacteroides	ovatus	NA	Bacteroides_ovatus	2
+2	Bacteroides	xylanisolvens	Bacteroides sp. 2_1_22	Bacteroides_xylanisolvens	1
+3	Agathobacter	rectalis 	Agathobacter rectalis (DSM 17629) 	Agathobacter_rectalis	5
+4	Anaerobutyricum	soehngenii 	Eubacterium hallii (DSM 1736)	Anaerobutyricum_soehngenii	8
+5	Eubacterium	siraeum	Eubacterium siraeum (DSM 15702)	Eubacterium_siraeum	1
+6	Faecalibacterium	prausnitzii	Faecalibacterium prausnitzii (A2-165)	Faecalibacterium_prausnitzii	2
+7	Flavonifractor	plautiia	Flavonifractor plautiia	Flavonifractor_plautiia	1
+8	Roseburia	intestinalis	Roseburia intestinalis (DSM 14610)	Roseburia_intestinalis	3
+9	Subdoligranulum	variabile	Subdoligranulum variabile (DSM 15176)	Subdoligranulum_variabile	4
+10	Coprococcus	catus	Coprococcus catus (ATCC27761)	Coprococcus_catus	1
+11	Akkermansia	muciniphila	Akkermansia muciniphila	Akkermansia_muciniphila	3
+12	Bifidobacterium	adolecentis	Bifidobacterium adolecentis	Bifidobacterium_adolescentis	4
+13	Blautia	hydrogenotrophica	Blautia hydrogenotrophica	Blautia_hydrogenotrophica	1
+14	Collinsella	aerofaciens	Collinsella aerofaciens	Collinsella_aerofaciens	6
+15	Blautia	obeum	Blautia obeum	Blautia_obeum	5
+16	Ruminococcus	bromii	Ruminococcus bromii	Ruminococcus_bromii	2

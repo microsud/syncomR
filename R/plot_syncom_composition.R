@@ -11,12 +11,14 @@
 #' @param facet.var Column specifying varible to facet by. Here, its by Bioreactors
 #' @param ... options to pass for ggplot2 facet_
 #' @return ggplot object.
+#' @import ggpubr
 #' @references
 #' \itemize{
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #' @examples
+#' \dontrun{
 #' data(SyncomFiltData)
 #' SyncomFiltData.rel <- microbiome::transform(SyncomFiltData, "compositional")
 #' p <- plot_syncom_composition(SyncomFiltData.rel,
@@ -26,6 +28,7 @@
 #'   sp.fill.pal = strain.colors, facet.var = "StudyIdentifier"
 #' )
 #' print(p)
+#' }
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
 #' @importFrom phyloseq psmelt
 #' @importFrom ggplot2 geom_line
@@ -93,12 +96,12 @@ plot_syncom_composition <-
         panel.grid.minor = element_blank(),
         # legend.position = "bottom",
         axis.title.x = element_blank(),
-        axis.text.x = element_text(size = 14),
-        axis.title.y = element_text(size = 16),
-        axis.text.y = element_text(size = 14),
-        strip.text.x = element_text(size = 18),
-        legend.text = element_text(size = 10, face = "italic"),
-        legend.title = element_text(size = 10)
+        axis.text.x = element_text(size = rel(1), colour = "grey30"),
+        axis.title.y = element_text(size = rel(1), colour = "grey30"),
+        axis.text.y = element_text(size = rel(1), colour = "grey30"),
+        strip.text.x = element_text(size = rel(1), colour = "grey30"),
+        legend.text = element_text(size = rel(1), colour = "grey30", face = "italic"),
+        legend.title = element_text(size = rel(1), colour = "grey30")
       ) + guide_italics
     return(comp.plt)
   }

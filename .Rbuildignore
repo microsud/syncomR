@@ -5,3 +5,6 @@
 ^syncomR\.Rproj$
 ^\.Rproj\.user$
 ^testing$
+^pkgdown$
+package_building_steps.R
+^data-raw$

@@ -1,9 +1,9 @@
-#' @title Utility for formatting SynComGMM and SynComRNAKEGG data
+#' @title Utility for Formatting SynComGMM and SynComRNAKEGG Data
 #'
 #' @description Group by GMM ID or KO ID.
 #'
 #' @details These are utility functions.
-#' @param x A data.frame to formate. Data frames similar to `SynComRNAKEGG`
+#' @param x A data.frame to format. Data frames similar to SynComRNAKEGG.
 #' @param by Either KOID or Module
 #' @return A data frame.
 #'
@@ -15,14 +15,16 @@
 #' }
 #' @export
 #' @keywords Utilities
+#' @importFrom rlang .data
 #'
+
 group_by_variable <- function(x = NULL, by = c("KOID", "Module")) {
   xdf <- xdf2 <- xdf3 <- NULL
   # x and reference should have one matiching column to merge
   # module_df <- merge(x, reference, by.x=column)
   if (by == "KOID") {
     xdf <- x %>%
-      group_by(KOID) %>%
+      group_by(.data$KOID) %>%
       summarize_if(is.numeric, sum, na.rm = TRUE)
 
     xdf2 <- as.data.frame(xdf)
@@ -33,7 +35,7 @@ group_by_variable <- function(x = NULL, by = c("KOID", "Module")) {
   }
   else if (by == "Module") {
     xdf <- x %>%
-      group_by(Module) %>%
+      group_by(.data$Module) %>%
       summarize_if(is.numeric, sum, na.rm = TRUE)
 
     xdf2 <- as.data.frame(xdf)

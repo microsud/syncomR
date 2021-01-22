@@ -1,18 +1,28 @@
-#' @title Measure and plot long term temporal turnover of community
+#' @title Measure and Plot Temporal Turnover of Community
 #'
-#' @description Calculates dissimilarity overtime compared to either strating, subsequent or final timepoint.
+#' @description Calculates dissimilarity overtime compared to either starting,
+#'              subsequent or final timepoint.
 #'
-#' @details Dissimilarity between subsequent samples can help in identifying succession of the community.
-#' Dissimilarity between longitudinal samples and start or final timepoint can help in identifying long term
-#' succession of the community.
-#' @param ps a otu/ASV/species abundance table
+#' @details Dissimilarity between subsequent samples can help in identifying succession
+#'          of the community. Dissimilarity between longitudinal samples and start or final
+#'          timepoint can help in identifying long term succession of the community.
+#'
+#' @param ps a OTU or ASV or Species abundance table
+#'
 #' @param time.col Column specifying time variable. Must be numeric.
+#'
 #' @param tree phylogenetic tree if interested in unifrac.
+#'
 #' @param method Can be any of the following c('bray','euclidean','unifrac', 'canberra')
+#'
 #' @param compositional TRUE or FALSE If relative abundance to be used as input for dist calculations
+#'
 #' @param compared.to final, subsequent or start
+#'
 #' @param plot TRUE or FALSE if TRUE plot is returned else a data frame
-#' @return Plot of community dissimilalrity over time.
+#'
+#' @return Plot of community dissimilarity over time.
+#'
 #' @references
 #' \itemize{
 #' \item{}{Guittar, J., Shade, A., & Litchman, E. (2019). Trait-based community assembly
@@ -20,28 +30,41 @@
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
+#'
 #' @examples
 #' data(SyncomFiltData)
-#' ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
+#' ps1.b5 <- subset_samples(
+#'   SyncomFiltData,
+#'   StudyIdentifier == "Bioreactor A"
+#' )
 #' p <- temporal_turnover(ps1.b5,
 #'   tree = NULL, time.col = "Time_hr_num",
 #'   method = "canberra", compositional = TRUE, compared.to = "start"
 #' )
-#' p + geom_label_repel() + theme_syncom()
+#' p + theme_syncom() #+ geom_label_repel()
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
-#' @import tidyr
-#' @importFrom vegan vegdist
-#' @export
-#' @keywords Anlaysis and visualization
 #'
-temporal_turnover <- function(ps, time.col = NULL, tree = NULL,
+#' @import tidyr
+#'
+#' @importFrom vegan vegdist
+#'
+#' @importFrom rlang .data
+#'
+#' @importFrom ggrepel geom_label_repel
+#'
+#' @export
+#'
+#' @keywords Analysis and visualization
+#'
+
+temporal_turnover <- function(ps,
+                              time.col = NULL,
+                              tree = NULL,
                               method = c("bray", "euclidean", "unifrac", "canberra"),
                               compositional = c(TRUE, FALSE),
                               compared.to = "start",
                               plot = TRUE) {
-  require(tidyr)
-  require(vegan)
-  require(ggrepel)
+  OTU <- Abundance <- t1 <- t2 <- NULL
   if (is.null(time.col)) {
     stop("Please provide column name for time variable")
   }
@@ -55,9 +78,9 @@ temporal_turnover <- function(ps, time.col = NULL, tree = NULL,
   } else {
     ps <- ps
   }
-  otus <- t(abundances(ps))
-  metadf_b5 <- meta(ps)
-  ps.df <- psmelt(ps)
+  otus <- t(microbiome::abundances(ps))
+  metadf_b5 <- microbiome::meta(ps)
+  ps.df <- phyloseq::psmelt(ps)
 
   # head(otus)
   otus <- as.data.frame(otus)
@@ -65,9 +88,9 @@ temporal_turnover <- function(ps, time.col = NULL, tree = NULL,
   otus$time <- metadf_b5[, time.col]
 
   j5 <- ps.df %>%
-    spread(OTU, Abundance, fill = 0) %>%
+    tidyr::pivot_wider(names_from = OTU, values_from = Abundance) %>%
     do(distance_melt(
-      x = .$Sample,
+      x = .data$Sample,
       y = otus,
       method = method
     )) %>%

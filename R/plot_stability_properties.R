@@ -21,34 +21,39 @@
 #' @return Plots.
 #'
 #' @seealso Input for this functions come from \code{\link{stability_properties}}
+#'
 #' @importFrom graphics matplot
+#'
 #' @references
 #' \itemize{
 #' \item{}{Liu, Z., et al. (2018). Ecological stability properties of
-#' microbial communities assessed by flow cytometry. mSphere, 3(1), e00564-17.
-#' http://msphere.asm.org/content/3/1/e00564-17
+#'         microbial communities assessed by flow cytometry. \emph{mSphere}, 3(1), e00564-17.
+#' \url{http://msphere.asm.org/content/3/1/e00564-17}
 #' }
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #'
 #' @examples
+#'\dontrun{
 #' data(SyncomFiltData)
 #' ps1.b5 <- subset_samples(SyncomFiltData, StudyIdentifier == "Bioreactor A")
 #' ps1.sub <- subset_samples(ps1.b5, Time_hr_num >= 28)
-#' dat.stab <- stability_properties(ps1.sub, time.col = "Time_hr", experimentStart = 52, tref = 152)
+#' dat.stab <- stability_properties(ps1.sub,
+#'   time.col = "Time_hr",
+#'   experimentStart = 52, tref = 152
+#' )
 #' plot_stability_properties(dat.stab, property = "dist.ot")
+#' }
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
 #'
 #' @export
-#' @keywords Anlaysis and visualization
+#' @keywords Analysis and visualization
 
 plot_stability_properties <- function(stab.in,
                                       property = c(
                                         "dist.ot", "resilience.ot.eucl",
                                         "resilience.ot.canb", "resilience.oline"
                                       )) {
-  stab.in <- dat.stab
-
   titleSize <- 0.95
   numberOfGates <- stab.in$numberOfGates
   tref <- stab.in$tref

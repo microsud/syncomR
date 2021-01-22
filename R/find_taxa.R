@@ -1,28 +1,39 @@
-#' @title Find taxa that is highest or lowest abundant in each sample
+#' @title Find Taxa That is Highest or Lowest Abundant in Each Sample
 #'
 #' @description Identifying either taxon with highest or lowest abundance.
 #'
-#' @details The output of this function can be used for identifying either taxon with highest or lowest abundance.
+#' @details The output of this function can be used for identifying either
+#'          taxon with highest or lowest abundance.
+#'
 #' @param ps a \code{\link{phyloseq-class}} with compositional data
+#'
 #' @param which.taxa find "most_abund" or "least_abund"
-#' @return A data frame with sample_id, taxon highest or lowest abundance, and abundance value.
+#'
+#' @return A data frame with sample_id, taxon highest or lowest abundance,
+#'         and abundance value.
+#'
 #' @references
 #' \itemize{
 #' \item{}{'Shetty SA et al (2019-2024)}
 #' \item{}{To cite the package, see citation('syncomR')}
 #' }
 #' @examples
+#'
 #' data(SyncomFiltData)
 #' ps.rel <- microbiome::transform(SyncomFiltData, "compositional")
 #' otu.tb <- find_taxa(ps.rel, which.taxa = "most_abund")
 #' head(otu.tb)
 #' @author Contact: Sudarshan A. Shetty \email{sudarshanshetty9@gmail.com}
+#'
 #' @export
+#'
 #' @keywords Utilities
 
-find_taxa <- function(ps, which.taxa = c("most_abund", "least_abund")) {
+find_taxa <- function(ps,
+                      which.taxa = c("most_abund", "least_abund")) {
   otu.df <- tax <- abund <- sample_id <- taxon <- res <- NULL
-  otu.df <- as.data.frame(t(abundances(ps)))
+
+  otu.df <- as.data.frame(t(microbiome::abundances(ps)))
 
   if (which.taxa == "most_abund") {
     tax <- max.col(otu.df, "first")
