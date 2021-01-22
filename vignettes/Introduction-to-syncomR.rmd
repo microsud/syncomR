@@ -8,7 +8,7 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-The `syncomR` is an R package consisting of functions for use with time-series microbial census data. The package is mainly accompaying the research article "Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes" Shetty SA., et al 2020. Therefore, the functions have been tested using a synthetic minimal microbiome that was assembled in three bioreactors. Published R codes were wrapped for convinient handling of the temporal census data of synthetic minimal microbiome. 
+The `syncomR` is an R package consisting of functions for use with time-series microbial census data. The package is mainly accompanying the research article "Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes" Shetty SA., et al 2020. Therefore, the functions have been tested using a synthetic minimal microbiome that was assembled in three bioreactors. Published R codes were wrapped for convenient handling of the temporal census data of synthetic minimal microbiome. Therefore, this package is considered as a research compendium for organizing and sharing codes and files pertaining to the said research article.    
 
 ## Installing syncomR   
 ```{r, eval=FALSE}
@@ -166,7 +166,7 @@ p.start / p.subseq / p.final
 ```
 
 The temporal turnover data can be extracted as follows.  
-```{r}
+```{r eval=FALSE}
 # extract data 
 dat <- p$data
 kable(head(dat))
@@ -204,7 +204,7 @@ Input is from the `stability_properties` function.
 ```{r nmds-stability, fig.align='center', fig.width=6, fig.height=4}
 
 p_ba <- plot_nmds_stability(dat.stab) 
-# the nmds message is printed on purpose for user to check if Solution reached
+# the nmds message is printed on purpose for user to check if Solution is reached
 p_ba$plot + theme_syncom() + xlab("NMDS1") + ylab("NMDS2")
 
 ```
