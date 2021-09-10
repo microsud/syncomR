@@ -32,7 +32,7 @@ jobs:
     env:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
-      GITHUB_PAT: ${{secrets.PAT}}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v2
@@ -77,7 +77,7 @@ jobs:
         run: |
           remotes::install_github("joey711/phyloseq", repos = BiocManager::repositories())
           remotes::install_github("microbiome/microbiome", repos = BiocManager::repositories())
-          remotes::install_github("hallucigenia-sparsa/seqtime") 
+          remotes::install_github("hallucigenia-sparsa/seqtime")
           BiocManager::install(remotes::dev_package_deps(dependencies = TRUE, repos = BiocManager::repositories())$package)
           remotes::install_cran(c("rcmdcheck","covr","magick","patchwork","ggrepel","dplyr","tidyr","tibble","knitr"))
         shell: Rscript {0}
