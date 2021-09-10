@@ -8,7 +8,7 @@ vignette: >
   \usepackage[utf8]{inputenc}
 ---
 
-The `syncomR` is an R package consisting of functions for use with time-series microbial census data. The package is mainly accompanying the research article "Minimalist Approach for Deciphering the Ecophysiology of Human Gut Microbes" Shetty SA., et al 2020. Therefore, the functions have been tested using a synthetic minimal microbiome that was assembled in three bioreactors. Published R codes were wrapped for convenient handling of the temporal census data of synthetic minimal microbiome. Therefore, this package is considered as a research compendium for organizing and sharing codes and files pertaining to the said research article.    
+The `syncomR` is an R package consisting of functions for use with time-series microbial census data. The package is mainly accompanying the research article "Functional analysis of a synthetic gut microbiome reveals niche segregation as a driving force for assembly, stability, co-existence and activity" Shetty SA., et al 2020. Therefore, the functions have been tested using a synthetic minimal microbiome that was assembled in three bioreactors. Published R codes were wrapped for convenient handling of the temporal census data of synthetic minimal microbiome. Therefore, this package is considered as a research compendium for organizing and sharing codes and files pertaining to the said research article.    
 
 ## Installing syncomR   
 ```{r, eval=FALSE}
@@ -71,7 +71,7 @@ pl
 
 ## Community composition   
 
-Visualizing overal community composition over time in different bioreactors.  
+Visualizing overall community composition over time in different bioreactors.  
 
 ** Area plot**  
 ```{r Community-composition-area, fig.align='center', fig.height=6, fig.width=8}
