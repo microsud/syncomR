@@ -16,4 +16,4 @@ OAtoken
 *.rds
 inst/doc
 docs
-testing
+data-raw/testing
