@@ -1,4 +1,19 @@
 Meta
 .Rproj.user
-doc
+.Rhistory
+.RData
+.Ruserdata
+# Do not add maintenance material
+*~
+inst/extras/*.rds
+inst/extras/*.R
+data-raw/*.R
+data-raw/*.rda
+data-raw/*.pdf
+data-raw/*.rds
+# Never put this in version control
+OAtoken
+*.rds
+inst/doc
 docs
+testing
