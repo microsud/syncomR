@@ -2,7 +2,7 @@
 # syncomR: Synthetic Microbial Community Data Exploration, Analysis and Visualization using R     
 
 
-<font color="red">This package is in experimental stage and should be used with caution!</font>
+[![R-CMD-check](https://github.com/microsud/syncomR/actions/workflows/rcmdcheck.yml/badge.svg)](https://github.com/microsud/syncomR/actions/workflows/rcmdcheck.yml)  
 
 ## About
 
