@@ -62,16 +62,49 @@ NULL
 #' \code{\link{phyloseq-class}} object.
 #' }
 #'
-#' @keywords data
+#' @keywords Data
 NULL
 
+#' @title SynComm not Corrected Species-level data
+#' @description The \strong{SyncomUncorrectedCounts} data set contains high-through
+#'              taxonomic profiling data from 186 samples taken from the syncom
+#'              experiment and 16 species-level counts.
+#'              For raw ASV-level counts check \strong{SyncomRawCounts}.
+#'
+#' @name SyncomUncorrectedCounts
+#'
+#' @return Loads the data set in R.
+#'
+#' @docType data
+#'
+#' @author Sudarshan Shetty \email{sudarshanshetty9@gmail.com}
+#'
+#' @references Shetty SA et al. (20XX) XXX 1:e32
+#'
+#' @usage data(SyncomUncorrectedCounts)
+#'
+#' @return Loads the data set in R.
+#'
+#' @format List of the following data matrices as described in detail in
+#' Shetty SA et al. (20XX):
+#' \itemize{
+#' \item HPLC: Quantification of metabolites majorly short chain fatty acids
+#' \item microbes: 16S rRNA gene counts corrected for copy numbers of
+#'       16 species-level counts across 210 samples
+#' \item meta: Sample metadata including time point, StudyIdentifier, Perturbations, etc
+#' \item phyloseq The syn comm data set converted into a
+#' \code{\link{phyloseq-class}} object.
+#' }
+#'
+#' @keywords Data
+NULL
 
 #' @title SynComm Filtered Copy Number Corrected Species-level data
 #'
 #' @description The \strong{SyncomFiltData} data set contains high-through taxonomic
 #'              profiling data from 183 samples taken from the syncom experiment
 #'              and 16 species-level counts. The data set contains subset of data with
-#'              only time points sampled for each bioreacotr. No control samples
+#'              only time points sampled for each bioreactor. No control samples
 #'              samples from feed, reagent and DNA extraction procedure, for this check
 #'              either \strong{SyncomRawCounts} or \strong{SyncomCopyCorrectedCounts}.
 #'
@@ -100,7 +133,7 @@ NULL
 #' \code{\link{phyloseq-class}} object.
 #' }
 #'
-#' @keywords data
+#' @keywords Data
 NULL
 
 #' @title SynComm Raw Locus Tag Count From Raw Read Processing
@@ -126,7 +159,7 @@ NULL
 #' @format List of the following data matrices as described in detail in
 #' Shetty SA et al. (20XX):
 #'
-#' @keywords data
+#' @keywords Data
 NULL
 
 #' @title SynComm KEGG lLinking of SynComRawRNA
@@ -153,7 +186,7 @@ NULL
 #' @format List of the following data matrices as described in detail in
 #'         Shetty SA et al. (20XX):
 #'
-#' @keywords data
+#' @keywords Data
 NULL
 
 
@@ -182,5 +215,5 @@ NULL
 #' @format List of the following data matrices as described in detail in
 #'        Shetty SA et al. (20XX):
 #'
-#' @keywords data
+#' @keywords Data
 NULL

@@ -5,7 +5,7 @@
 \title{Default ggplot2 theme}
 \usage{
 theme_syncom(
-  base_size = 12,
+  base_size = 11,
   base_family = "",
   base_line_size = base_size/170,
   base_rect_size = base_size/170

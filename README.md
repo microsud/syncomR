@@ -12,7 +12,7 @@ The package is mainly accompanying the research article "Functional analysis of 
 
 ## Installing syncomR   
 
-Before installing `syncomR`, you will need to install R (3.5.1 or later) and RStudio (1.1.463 or later). Windows users also have to install [RTools](https://cran.r-project.org/bin/windows/Rtools/). Then open RStudio as administrator and in the console panel run the commands below to install syncomR:  
+Before installing `syncomR`, you will need to install R (3.5.1 or later) and RStudio (1.1.463 or later). Windows users also have to install [RTools](https://cran.r-project.org/bin/windows/Rtools/). Then open RStudio as administrator and in the console panel run the commands below to install `syncomR`:  
 
 ``` 
 install.packages("devtools")

@@ -97,7 +97,7 @@ plot_trajectory <- function(ps,
       facet_wrap(varf, scales = "free_y") +
       labs(x = "Time (hr)", y = "Rel. Abundance (%)") +
       # scale_fill_manual(values = fasting_cols) +
-      scale_color_manual("Taxa", values = color.pal) +
+      scale_color_manual(values = color.pal) +
       # geom_vline(xintercept = 168, size = 1.2, alpha= 0.6)
       theme(panel.border = element_rect("transparent", size = 0.15))
 
@@ -118,7 +118,7 @@ plot_trajectory <- function(ps,
       # facet_wrap(varf, scales = "free_y") +
       labs(x = "Time (hr)", y = "Rel. Abundance (%)") +
       # scale_fill_manual(values = fasting_cols) +
-      scale_color_manual("Taxa", values = color.pal) +
+      scale_color_manual(values = color.pal) +
       theme(panel.border = element_rect("transparent", size = 0.15)) +
       labs(subtitle = taxa)
 

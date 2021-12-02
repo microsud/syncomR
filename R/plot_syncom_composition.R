@@ -4,7 +4,7 @@
 #'
 #' @details Temporal community composition
 #' @param ps A \code{\link{phyloseq-class}}
-#' @param type  Type of plot either area, line or bar
+#' @param type  Type of plot either area or bar
 #' @param time.col Column specifying time variable
 #' @param taxa.level Taxonomic level
 #' @param sp.fill.pal List of colors for plotting
@@ -21,6 +21,7 @@
 #' \dontrun{
 #' data(SyncomFiltData)
 #' SyncomFiltData.rel <- microbiome::transform(SyncomFiltData, "compositional")
+#' strain.colors <- syncom_colors("BacterialSpecies")[1:16]
 #' p <- plot_syncom_composition(SyncomFiltData.rel,
 #'   type = "bar",
 #'   time.col = "Time_hr_num",
@@ -40,7 +41,7 @@
 
 plot_syncom_composition <-
   function(ps,
-           type = c("area", "line", "bar"),
+           type = c("area", "bar"),
            time.col = "Time_hr",
            taxa.level = "OTU",
            sp.fill.pal = NULL,
@@ -54,33 +55,33 @@ plot_syncom_composition <-
 
 
     comp.plt <- ggplot(ps1.sub.df)
+    if (type == "bar") {
 
-    if (type == "line") {
-      comp.plt <- ggline(ps1.sub.df,
-        x = "Time",
-        y = "Abundance",
-        # error.plot = "pointrange",
-        colour = taxa.level,
-        group = taxa.level,
-        add = c("mean_se", "jitter"),
-        # color= taxa.level,
-        # facet.by = facet.var,
-        palette = sp.fill.pal
-      ) #+        scale_color_manual("Taxa", values = sp.fill.pal)
-    } else if (type == "bar") {
       comp.plt <- ggplot(ps1.sub.df)
       comp.plt <-
-        comp.plt + geom_bar(aes_string(x = "Time.ch", y = "Abundance", fill = taxa.level), position = "stack", stat = "identity") +
+        comp.plt + geom_bar(aes_string(x = "Time.ch",
+                                       y = "Abundance",
+                                       fill = taxa.level),
+                            position = "stack",
+                            stat = "identity") +
         scale_fill_manual("Taxa", values = sp.fill.pal)
+
     } else if (type == "area") {
       comp.plt <- ggplot(ps1.sub.df)
-      comp.plt <- comp.plt + geom_area(aes_string(x = "Time", y = "Abundance", fill = taxa.level)) + scale_fill_manual("Taxa", values = sp.fill.pal)
+      comp.plt <- comp.plt + geom_area(aes_string(x = "Time",
+                                                  y = "Abundance",
+                                                  fill = taxa.level)) +
+        scale_fill_manual("Taxa", values = sp.fill.pal)
     }
-    guide_italics <- guides(fill = guide_legend(label.theme = element_text(
-      size = 15,
-      face = "italic", colour = "Black", angle = 0
-    )))
-    comp.plt <- comp.plt + theme_minimal() +
+
+    guide_italics <- guides(fill = guide_legend(label.theme =
+                                                  element_text(size = 15,
+                                                               face = "italic",
+                                                               colour = "Black",
+                                                               angle = 0)))
+
+    comp.plt <- comp.plt +
+      theme_minimal() +
       # scale_x_datetime(date_labels="Day %d") +
       ylab("Proportions")
 

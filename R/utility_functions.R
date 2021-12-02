@@ -133,7 +133,7 @@ computeRL <- function(dx0xt, dx0x1) {
 #' @keywords Theme elements
 #' @import ggplot2
 
-theme_syncom <- function(base_size = 12,
+theme_syncom <- function(base_size = 11,
                          base_family = "",
                          base_line_size = base_size / 170,
                          base_rect_size = base_size / 170) {
@@ -144,22 +144,23 @@ theme_syncom <- function(base_size = 12,
   ) %+replace%
     theme(
       panel.background = element_rect(fill = "white"),
-      panel.border = element_rect(fill = NA, colour = "grey70", size = 1),
+      #panel.border = element_rect(fill = NA, colour = "#303030", size = 1),
       # plot.margin = margin(0.3, 0.3, 0.3, 0.3, "cm"),
-      panel.grid.major = element_blank(),
+      panel.grid.major = element_line(colour="#f0f0f0"),
       panel.grid.minor = element_blank(),
       panel.spacing = unit(0.5, "line"),
       # axis.ticks = element_blank(),
-      legend.title = element_text(size = rel(1), face = "bold", colour = "grey30"),
-      legend.text = element_text(size = rel(1), colour = "grey30"),
-      legend.key.size = unit(1, "lines"),
-      legend.background = element_rect(colour = NA, fill = NA),
-      axis.text = element_text(colour = "grey30"),
-      axis.title = element_text(colour = "grey30"),
-      strip.background = element_blank(),
-      strip.text = element_text(colour = "grey30"),
-      plot.title = element_text(colour = "grey30"),
-      plot.subtitle = element_text(colour = "grey30"),
+      legend.title = element_text(colour = "#303030", size = rel(1.2), face = "bold", hjust=0),
+      legend.text = element_text(size = rel(1.2), colour = "#303030"),
+      legend.key = element_rect(colour = NA, fill = NA),
+      #legend.background = element_rect(colour = NA, fill = NA),
+      axis.line = element_blank(),
+      axis.text = element_text(colour = "#303030",size = rel(1)),
+      axis.title = element_text(colour = "#303030",size = rel(1.2)),
+      strip.background = element_rect(fill = NA, colour = NA),
+      strip.text = element_text(colour = "#303030", size = rel(1.2)),
+      plot.title = element_text(colour = "#303030", size = rel(1.2),hjust = 0, margin=margin(0,0,10,0)),
+      plot.subtitle = element_text(colour = "#303030", size = rel(1),hjust = 0, margin=margin(0,0,10,0)),
       # legend.key = element_blank(),
       complete = TRUE
     )
@@ -180,6 +181,8 @@ theme_syncom <- function(base_size = 12,
 #' col <- syncom_colors("OTU")
 #' }
 #' @keywords Theme elements
+#' @rdname colors
+#' @name syncom_colors
 #' @export
 syncom_colors <- function(x, v = NULL) {
   if (x == "Species" | x == "Taxon" | x == "Bacteria" | x == "BacterialStrain" | x == "BacterialSpecies" | x == "OTU") {
@@ -189,7 +192,7 @@ syncom_colors <- function(x, v = NULL) {
       Akkermansia_muciniphila = "#e6194b", Bifidobacterium_adolescentis = "#3cb44b",
       Collinsella_aerofaciens = "#1f1f1f", Bacteroides_ovatus = "#7789c9",
       Bacteroides_xylanisolvens = "#f58231", Agathobacter_rectalis = "#911eb4",
-      Anaerobutyricum_soehngenii = "#0dbfbf", Eubacterium_siraeum = "#b097ad",
+      Anaerobutyricum_soehngenii = "blue4", Eubacterium_siraeum = "#b097ad",
       Blautia_hydrogenotrophica = "#bcf60c", Coprococcus_catus = "#fabebe",
       Flavonifractor_plautii = "#008080", Roseburia_intestinalis = "#e6beff",
       Faecalibacterium_prausnitzii = "#9a6324", Blautia_obeum = "#e4cd05",
@@ -203,18 +206,14 @@ syncom_colors <- function(x, v = NULL) {
   syncom_colors
 }
 
-#' @title Default Color Scheme
-#' @description Default colors for different variables.
-#' @param x Name of the variable type
-#' @param v Optional. Vector of elements to color.
-#' @return Named character vector of default colors
-#' @author Sudarshan Shetty \email{sudarshanshetty9@@gmail.com}
-#' @references See citation("syncomR")
+
 #' @examples
 #' \dontrun{
 #' col <- syncom_colors2("Species")
 #' }
 #' @keywords Theme elements
+#' @rdname colors
+#' @name syncom_colors2
 #' @export
 syncom_colors2 <- function(x, v = NULL) {
   if (x == "Species" | x == "Taxon" | x == "Bacteria" | x == "BacterialStrain" | x == "BacterialSpecies" | x == "OTU") {
@@ -224,7 +223,7 @@ syncom_colors2 <- function(x, v = NULL) {
       `Akkermansia muciniphila` = "#e6194b", `Bifidobacterium adolescentis` = "#3cb44b",
       `Collinsella aerofaciens` = "#1f1f1f", `Bacteroides ovatus` = "#7789c9",
       `Bacteroides xylanisolvens` = "#f58231", `Agathobacter rectalis` = "#911eb4",
-      `Anaerobutyricum soehngenii` = "#0dbfbf", `Eubacterium siraeum` = "#b097ad",
+      `Anaerobutyricum soehngenii` = "blue4", `Eubacterium siraeum` = "#b097ad",
       `Blautia hydrogenotrophica` = "#bcf60c", `Coprococcus catus` = "#fabebe",
       `Flavonifractor plautii` = "#008080", `Roseburia intestinalis` = "#e6beff",
       `Faecalibacterium prausnitzii` = "#9a6324", `Blautia obeum` = "#e4cd05",
@@ -236,4 +235,90 @@ syncom_colors2 <- function(x, v = NULL) {
   }
 
   syncom_colors2
+}
+
+
+#' @examples
+#' \dontrun{
+#' col <- bugs.colors("Species")
+#' }
+#' @keywords Theme elements
+#' @rdname colors
+#' @name bugs.colors
+#' @export
+#'
+bugs.colors <- function(x, v = NULL) {
+  if (x == "Species" | x == "Taxon" | x == "Bacteria" | x == "BacterialStrain" | x == "BacterialSpecies" | x == "OTU") {
+    # http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+    # https://www.r-graph-gallery.com/42-colors-names/
+    bugs.colors <- c(
+      `Akkermansia muciniphila` = "#e6194b", `Bifidobacterium adolescentis` = "#3cb44b",
+      `Collinsella aerofaciens` = "#1f1f1f", `Bacteroides ovatus` = "#7789c9",
+      `Bacteroides xylanisolvens` = "#f58231", `Agathobacter rectalis` = "#911eb4",
+      `Anaerobutyricum soehngenii` = "blue4", `Eubacterium siraeum` = "#b097ad",
+      `Blautia hydrogenotrophica` = "#bcf60c", `Coprococcus catus` = "#fabebe",
+      `Flavonifractor plautii` = "#008080", `Roseburia intestinalis` = "#e6beff",
+      `Faecalibacterium prausnitzii` = "#9a6324", `Blautia obeum` = "#e4cd05",
+      `Ruminococcus bromii` = "#800000", `Subdoligranulum variabile` = "#88cf9e"
+    )
+  }
+
+  bugs.colors
+}
+
+#' @examples
+#' \dontrun{
+#' col <- bugs.colors2("Species")
+#' }
+#' @keywords Theme elements
+#' @rdname colors
+#' @name bugs.colors2
+#' @export
+#'
+bugs.colors2 <- function(x, v = NULL) {
+  if (x == "Species" | x == "Taxon" | x == "Bacteria" | x == "BacterialStrain" | x == "BacterialSpecies" | x == "OTU") {
+    # http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+    # https://www.r-graph-gallery.com/42-colors-names/
+    bugs.colors2 <- c(
+      `Akkermansia.muciniphila` = "#e6194b", `Bifidobacterium.adolescentis` = "#3cb44b",
+      `Collinsella.aerofaciens` = "#1f1f1f", `Bacteroides.ovatus` = "#7789c9",
+      `Bacteroides.xylanisolvens` = "#f58231", `Agathobacter.rectalis` = "#911eb4",
+      `Anaerobutyricum.soehngenii` = "blue4", `Eubacterium.siraeum` = "#b097ad",
+      `Blautia.hydrogenotrophica` = "#bcf60c", `Coprococcus.catus` = "#fabebe",
+      `Flavonifractor.plautii` = "#008080", `Roseburia.intestinalis` = "#e6beff",
+      `Faecalibacterium.prausnitzii` = "#9a6324", `Blautia.obeum` = "#e4cd05",
+      `Ruminococcus.bromii` = "#800000", `Subdoligranulum.variabile` = "#88cf9e"
+    )
+  }
+
+  bugs.colors2
+}
+
+
+#' @examples
+#' \dontrun{
+#' col <- bugs.colors2("Species")
+#' }
+#' @keywords Theme elements
+#' @rdname colors
+#' @name bugs.colors3
+#' @export
+#'
+bugs.colors3 <- function(x, v = NULL) {
+  if (x == "Species" | x == "Taxon" | x == "Bacteria" | x == "BacterialStrain" | x == "BacterialSpecies" | x == "OTU") {
+    # http://www.stat.columbia.edu/~tzheng/files/Rcolor.pdf
+    # https://www.r-graph-gallery.com/42-colors-names/
+    bugs.colors3 <- c(
+      `Akkermansia_muciniphila` = "#e6194b", `Bifidobacterium_adolescentis` = "#3cb44b",
+      `Collinsella_aerofaciens` = "#1f1f1f", `Bacteroides_ovatus` = "#7789c9",
+      `Bacteroides_xylanisolvens` = "#f58231", `Agathobacter_rectalis` = "#911eb4",
+      `Anaerobutyricum_soehngenii` = "blue4", `Eubacterium_siraeum` = "#b097ad",
+      `Blautia_hydrogenotrophica` = "#bcf60c", `Coprococcus_catus` = "#fabebe",
+      `Flavonifractor_plautii` = "#008080", `Roseburia_intestinalis` = "#e6beff",
+      `Faecalibacterium_prausnitzii` = "#9a6324", `Blautia_obeum` = "#e4cd05",
+      `Ruminococcus_bromii` = "#800000", `Subdoligranulum_variabile` = "#88cf9e"
+    )
+  }
+
+  bugs.colors3
 }

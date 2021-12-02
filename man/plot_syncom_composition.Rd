@@ -6,7 +6,7 @@
 \usage{
 plot_syncom_composition(
   ps,
-  type = c("area", "line", "bar"),
+  type = c("area", "bar"),
   time.col = "Time_hr",
   taxa.level = "OTU",
   sp.fill.pal = NULL,
@@ -17,7 +17,7 @@ plot_syncom_composition(
 \arguments{
 \item{ps}{A \code{\link{phyloseq-class}}}
 
-\item{type}{Type of plot either area, line or bar}
+\item{type}{Type of plot either area or bar}
 
 \item{time.col}{Column specifying time variable}
 
@@ -42,6 +42,7 @@ Temporal community composition
 \dontrun{
 data(SyncomFiltData)
 SyncomFiltData.rel <- microbiome::transform(SyncomFiltData, "compositional")
+strain.colors <- syncom_colors("BacterialSpecies")[1:16]
 p <- plot_syncom_composition(SyncomFiltData.rel,
   type = "bar",
   time.col = "Time_hr_num",
